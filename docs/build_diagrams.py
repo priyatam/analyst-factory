@@ -152,7 +152,7 @@ def deployment() -> None:
     pill(c, 40, 300, 170, 54, "Reviewer", "senior analyst / compliance officer")
 
     boundary(c, 250, 92, 620, 470, "NOVAMARK AWS ACCOUNT, THEIR REGION")
-    c.add(f'<rect x="270" y="118" width="240" height="210" rx="10" fill="{WHITE}" '
+    c.add(f'<rect x="270" y="118" width="240" height="290" rx="10" fill="{WHITE}" '
           f'stroke="{PURPLE}" stroke-width="2" stroke-dasharray="7 5"/>')
     c.add(f'<text x="284" y="138" font-size="10.5" font-weight="700" fill="{PURPLE}" '
           f'letter-spacing="0.5">AGENTCORE RUNTIME, ONE MICROVM</text>')
@@ -162,15 +162,15 @@ def deployment() -> None:
          ["intake to synthesis,", "two gates inside"])
 
     card(c, 580, 118, 240, 62, PURPLE, "Bedrock", ["model inference, their region"])
-    card(c, 580, 198, 240, 62, BLUE, "AgentCore Gateway",
-         ["Streamable HTTP, tenant from JWT"])
-    card(c, 580, 278, 240, 62, GREEN, "S3", ["one MemoState per run_id"])
-    card(c, 580, 358, 240, 62, GRAY, "CloudWatch", ["traces and logs"])
+    card(c, 580, 210, 240, 62, GREEN, "S3", ["one MemoState per run_id"])
+    card(c, 580, 302, 240, 62, GRAY, "CloudWatch", ["traces and logs"])
+    card(c, 288, 340, 204, 52, INK, "mocks, in this process",
+         ["market quote, research KB over stdio"])
 
-    boundary(c, 890, 92, 280, 470, "OUTSIDE NOVAMARK")
-    card(c, 908, 118, 244, 62, INK, "Market REST API", ["quote, 429 + Retry-After"])
-    card(c, 908, 198, 244, 62, INK, "Filings store", ["CSV index, filing text"])
-    card(c, 908, 278, 244, 62, BLUE, "Research KB", ["MCP server, prior memos"])
+    boundary(c, 890, 92, 280, 470, "NOT CONNECTED")
+    card(c, 908, 160, 244, 62, GRAY, "Market system", ["not called"], muted=True, dash="5 4")
+    card(c, 908, 250, 244, 62, GRAY, "Research database", ["not called"], muted=True, dash="5 4")
+    card(c, 908, 340, 244, 62, GRAY, "ESG provider", ["not called"], muted=True, dash="5 4")
     hline(c, 210, 286, 143, "1 request")
     hline(c, 286, 212, 172, "2 gate packet")
     hline(c, 212, 286, 327, "3 decision")
@@ -179,18 +179,16 @@ def deployment() -> None:
     # one spine off the pipeline, four short spurs, so no two routes share a segment
     spine = 548
     c.add(f'<line x1="492" y1="286" x2="{spine}" y2="286" stroke="{GRAY}" stroke-width="1.8"/>')
-    c.add(f'<line x1="{spine}" y1="149" x2="{spine}" y2="388" stroke="{GRAY}" '
+    c.add(f'<line x1="{spine}" y1="149" x2="{spine}" y2="333" stroke="{GRAY}" '
           f'stroke-width="1.8"/>')
-    for y, label in ((149, "5 model calls"), (229, "6 MCP"), (309, "7 save / load"),
-                     (389, "8 spans")):
+    for y, label in ((149, "5 model calls"), (241, "6 save / load"), (333, "7 spans")):
         c.add(f'<line x1="{spine}" y1="{y}" x2="578" y2="{y}" stroke="{GRAY}" '
               f'stroke-width="1.8" marker-end="url(#a{GRAY.strip("#")})"/>')
         c.add(f'<text x="{(spine + 578) / 2}" y="{y - 6}" text-anchor="middle" font-size="9.5" '
               f'fill="{GRAY}">{label}</text>')
 
-    hline(c, 820, 906, 229, "9 MCP over HTTP")
-    c.add(f'<line x1="390" y1="320" x2="390" y2="480" stroke="{GRAY}" stroke-width="1.8"/>')
-    hline(c, 390, 886, 480, "10 market quote and filing text")
+    c.add(f'<line x1="390" y1="320" x2="390" y2="340" stroke="{GRAY}" stroke-width="1.8" '
+          f'marker-end="url(#a{GRAY.strip("#")})"/>')
 
     boundary(c, 40, 400, 180, 162, "LEGEND")
     legend_rows = [(ORANGE, "compute"), (PURPLE, "model or agent"), (BLUE, "integration"),
@@ -202,16 +200,16 @@ def deployment() -> None:
         c.add(f'<text x="90" y="{y + 11}" font-size="11" fill="{GRAY}">{label}</text>')
     c.add(f'<rect x="58" y="552" width="24" height="14" rx="3" fill="{WHITE}" stroke="{GRAY}" '
           f'stroke-width="2" stroke-dasharray="5 4"/>')
-    c.add(f'<text x="90" y="563" font-size="11" fill="{GRAY}">P1, not built</text>')
+    c.add(f'<text x="90" y="563" font-size="11" fill="{GRAY}">not connected</text>')
 
     c.add(f'<text x="40" y="612" font-size="12.5" font-weight="700" fill="{INK}">'
-          f'Two things that break in their cloud but not locally</text>')
+          f'Two things that break in their account and do not break locally</text>')
     c.add(f'<text x="40" y="634" font-size="11.5" fill="{GRAY}">'
-          f'The session is reclaimed while a reviewer is still reading, so every resume '
-          f'rehydrates from S3 rather than memory.</text>')
+          f'The US inference profile can send a prompt to another US region. A local call '
+          f'has no residency check that fails.</text>')
     c.add(f'<text x="40" y="654" font-size="11.5" fill="{GRAY}">'
-          f'The Gateway enforces tenant identity from the signed JWT, where the local mock '
-          f'trusts whatever tenant the client claims.</text>')
+          f'The research client starts a subprocess on this machine. Their research server '
+          f'is not on that machine.</text>')
 
     c.save("deployment")
 

@@ -12,6 +12,8 @@ This project is an agentic proof of concept of that workflow: a state machine bu
 - [Architecture](docs/architecture.md): the state machine, the runtime, security, and what is not built
 - [Decisions](docs/decisions.md): the choices made and what each rejected
 - [Code reviews](docs/code-reviews.md): review findings and planned refactors
+- [Deployment](docs/deployment.md): where the run executes, and what breaks in NovaMark's account
+- [CFO brief](docs/cfo-brief.md): the five figures, and what this prototype did not measure
 
 ![Where each part runs](docs/img/deployment.svg)
 
@@ -53,12 +55,20 @@ uv run pytest tests/test_deployed.py -v
 uv run python src/demo.py
 ```
 
-**What you see.** Two memos run through the deployed runtime, and the demo plays the reviewers:
+The demo stops at each review and asks you to approve or reject. It asks for your name and a comment. The clean filing asks only the compliance officer. Pass `--high-risk` to run the filing that also asks the senior analyst. Pass `--auto-approve` to approve each review with no one at the keyboard.
 
-- **AAPL, the tidy filing.** Metrics the filing does not state, such as `cloud_revenue` and `capex_outlook`, come back null with low confidence, and the risk is rated high. The run stops at `senior_review` with those flagged, the demo approves it, and the run continues to `compliance_review`.
-- **NVDA, the garbled filing.** The Gaming figure has no scale unit, so it is flagged too, alongside the same kind of null metrics. The run follows the same two stops.
+```sh
+uv run python src/demo.py --high-risk
+uv run python src/demo.py --auto-approve
+uv run python src/demo.py --high-risk --auto-approve
+```
 
-At each stop the demo prints the gate and who must decide, the flagged figures, the risk level, any data gaps, and every extracted figure with its confidence and the exact sentence it came from. After the compliance approval it prints `published`, the number of recorded decisions, and the memo. The full history of each run is saved in the state bucket as one snapshot per pause and one at the end.
+**What you see.** One memo. Each state is a colored box. It fills in when the runtime answers, and the current review is highlighted. The run continues only after that review is decided.
+
+- **AAPL, the clean filing.** This is the default. The stated figures are revenue, gross margin, and operating income. A metric the filing never mentions is left out. Supplier concentration is not scored high. Every confidence is at or above 0.75 and the risk is not high, so the run skips `senior_review`, stops only at `compliance_review`, and then prints `published`.
+- **NVDA, the high-risk filing.** Pass `--high-risk`. The Gaming figure has no scale unit, so its confidence is capped under 0.75, and the filing states customer concentration and export controls, so the risk is high. The run stops at `senior_review`, then `compliance_review`, then prints `published`.
+
+At a review, the box below the track lists who must decide, the flagged figures, the risk, any data gaps, and every extracted figure with its confidence and the sentence it came from. After the compliance approval the memo appears in a green box, with the number of recorded decisions. The full history of each run is saved in the state bucket as one snapshot per pause and one at the end.
 
 **Remove it** when you are done:
 

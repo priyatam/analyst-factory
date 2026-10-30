@@ -30,7 +30,7 @@ decides, and the run is saved while it waits.
 - **`evidence_check`** fails closed on a missing or invented citation.
 - **`synthesis`** writes the memo from approved values.
 
-`document_analyser` and `synthesis` are the only processes that call the model.
+`document_analyser`, `risk_assessor`, and `synthesis` are the processes that call the model. The risk level itself is computed in code from the reasons the model lists.
 
 The knowledge base is the firm's own system. Its memos are read concurrently with the market
 and filings, then merged into the state. It is not one of our processes, and a failure there

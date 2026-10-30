@@ -22,9 +22,10 @@ Return JSON only:
 {{"values": {{"<metric>": {{"value": <number|string|null>, "excerpt": "<exact sentence>",
 "confidence": <0..1>, "reason": "<one sentence>", "source_id": "<doc id>"}}}}}}
 
-Rules: copy the excerpt exactly. If a figure is not stated, use a null value, an empty
-excerpt and source_id, confidence below 0.5, and say so in the reason. Never quote a
-sentence that does not state the figure. If units conflict, keep the figure and lower the
+Rules: copy the excerpt exactly. Include a metric only when the text states a figure
+for it, or explicitly declines to quantify it. If the text never mentions the metric,
+omit the key. A decline is a null value, the sentence that declines, confidence below
+0.5, and a reason that says so. If units conflict, keep the figure and lower the
 confidence.
 
 Text:
@@ -34,6 +35,7 @@ Text:
 AMOUNT = re.compile(r"\$(\d[\d,]*(?:\.\d+)?)\s*([A-Za-z]+)?")
 SCALES = {"billion", "million", "thousand", "bn", "mm", "m"}
 CAP = 0.5  # confidence ceiling for a figure that has no scale word
+DECLINED = ("not break", "declin", "not disclosed", "will not", "no guidance")
 
 
 def unscaled(excerpt: str) -> bool:
@@ -44,6 +46,13 @@ def unscaled(excerpt: str) -> bool:
 def parse(text: str) -> dict:
     start, end = text.find("{"), text.rfind("}")
     return json.loads(text[start:end + 1])["values"]
+
+
+def declined(raw: dict) -> bool:
+    """A null the filing itself refuses to quantify. An unmentioned metric is not one."""
+    if (raw.get("excerpt") or "").strip():
+        return True
+    return any(phrase in (raw.get("reason") or "").lower() for phrase in DECLINED)
 
 
 def entry(raw: dict) -> dict:
@@ -68,6 +77,7 @@ async def analyse(state: MemoState, deps) -> MemoState:
     """
     text = "\n\n".join(f"[{doc_id}]\n{body}" for doc_id, body in state["sources"].items())
     raw = parse(await deps["ask"](PROMPT.format(schema=", ".join(SCHEMA), text=text)))
-    values = {name: entry(value) for name, value in raw.items() if name in SCHEMA}
+    values = {name: entry(value) for name, value in raw.items()
+              if name in SCHEMA and (value.get("value") is not None or declined(value))}
     checked = evidence_check(await risk_assessor.assess({**state, "values": values}, deps))
     return {**checked, "status": Status.SENIOR_REVIEW if needs_gate1(checked) else Status.SYNTHESIS}

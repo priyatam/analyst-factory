@@ -5,6 +5,26 @@ from novamark.process.document_analyser import unscaled
 from tests.support import Model, run
 
 
+def test_supplier_concentration_is_not_the_severe_rule():
+    """AAPL's suppliers are 'concentrated with'. That is not customer concentration."""
+    from novamark.process.risk_assessor import level
+
+    suppliers = level(["Manufacturing is concentrated with a small number of suppliers"],
+                      {"revenue": {"confidence": 0.94}})
+    customers = level(["Revenue is concentrated among a few customers"],
+                      {"revenue": {"confidence": 0.94}})
+
+    assert suppliers["level"] == "medium"
+    assert customers["level"] == "high"
+
+
+def test_an_unmentioned_metric_is_not_a_decline():
+    from novamark.process.document_analyser import declined
+
+    assert not declined({"value": None, "excerpt": "", "reason": "not in the filing"})
+    assert declined({"value": None, "excerpt": "We're not breaking that out separately yet", "reason": ""})
+
+
 def test_nvda_segment_figure_is_capped_because_it_has_no_scale():
     """The table puts a scaled and an unscaled amount in the same column."""
     assert not unscaled("Data Center $115.2 billion")  # scaled: comparable
