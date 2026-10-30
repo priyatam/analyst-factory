@@ -16,7 +16,7 @@
 <text x="125.0" y="341.0" text-anchor="middle" font-size="10" fill="#687078">senior analyst / compliance officer</text>
 <rect x="250" y="92" width="620" height="470" rx="12" fill="#fafbfc" stroke="#687078" stroke-width="1.5" stroke-dasharray="7 5"/>
 <text x="264" y="113" font-size="11" font-weight="700" fill="#687078" letter-spacing="0.8">NOVAMARK AWS ACCOUNT, THEIR REGION</text>
-<rect x="270" y="118" width="240" height="210" rx="10" fill="#ffffff" stroke="#8c4fff" stroke-width="2" stroke-dasharray="7 5"/>
+<rect x="270" y="118" width="240" height="290" rx="10" fill="#ffffff" stroke="#8c4fff" stroke-width="2" stroke-dasharray="7 5"/>
 <text x="284" y="138" font-size="10.5" font-weight="700" fill="#8c4fff" letter-spacing="0.5">AGENTCORE RUNTIME, ONE MICROVM</text>
 <rect x="288" y="152" width="204" height="68" rx="8" fill="#ffffff" stroke="#ed7100" stroke-width="2"/>
 <text x="390.0" y="176" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">agent.py</text>
@@ -29,26 +29,26 @@
 <rect x="580" y="118" width="240" height="62" rx="8" fill="#ffffff" stroke="#8c4fff" stroke-width="2"/>
 <text x="700.0" y="142" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">Bedrock</text>
 <text x="700.0" y="160" text-anchor="middle" font-size="11" fill="#687078">model inference, their region</text>
-<rect x="580" y="198" width="240" height="62" rx="8" fill="#ffffff" stroke="#527fff" stroke-width="2"/>
-<text x="700.0" y="222" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">AgentCore Gateway</text>
-<text x="700.0" y="240" text-anchor="middle" font-size="11" fill="#687078">Streamable HTTP, tenant from JWT</text>
-<rect x="580" y="278" width="240" height="62" rx="8" fill="#ffffff" stroke="#3f8624" stroke-width="2"/>
-<text x="700.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">S3</text>
-<text x="700.0" y="320" text-anchor="middle" font-size="11" fill="#687078">one MemoState per run_id</text>
-<rect x="580" y="358" width="240" height="62" rx="8" fill="#ffffff" stroke="#687078" stroke-width="2"/>
-<text x="700.0" y="382" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">CloudWatch</text>
-<text x="700.0" y="400" text-anchor="middle" font-size="11" fill="#687078">traces and logs</text>
+<rect x="580" y="210" width="240" height="62" rx="8" fill="#ffffff" stroke="#3f8624" stroke-width="2"/>
+<text x="700.0" y="234" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">S3</text>
+<text x="700.0" y="252" text-anchor="middle" font-size="11" fill="#687078">one MemoState per run_id</text>
+<rect x="580" y="302" width="240" height="62" rx="8" fill="#ffffff" stroke="#687078" stroke-width="2"/>
+<text x="700.0" y="326" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">CloudWatch</text>
+<text x="700.0" y="344" text-anchor="middle" font-size="11" fill="#687078">traces and logs</text>
+<rect x="288" y="340" width="204" height="52" rx="8" fill="#ffffff" stroke="#232f3e" stroke-width="2"/>
+<text x="390.0" y="364" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">mocks, in this process</text>
+<text x="390.0" y="382" text-anchor="middle" font-size="11" fill="#687078">market quote, research KB over stdio</text>
 <rect x="890" y="92" width="280" height="470" rx="12" fill="#fafbfc" stroke="#687078" stroke-width="1.5" stroke-dasharray="7 5"/>
-<text x="904" y="113" font-size="11" font-weight="700" fill="#687078" letter-spacing="0.8">OUTSIDE NOVAMARK</text>
-<rect x="908" y="118" width="244" height="62" rx="8" fill="#ffffff" stroke="#232f3e" stroke-width="2"/>
-<text x="1030.0" y="142" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">Market REST API</text>
-<text x="1030.0" y="160" text-anchor="middle" font-size="11" fill="#687078">quote, 429 + Retry-After</text>
-<rect x="908" y="198" width="244" height="62" rx="8" fill="#ffffff" stroke="#232f3e" stroke-width="2"/>
-<text x="1030.0" y="222" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">Filings store</text>
-<text x="1030.0" y="240" text-anchor="middle" font-size="11" fill="#687078">CSV index, filing text</text>
-<rect x="908" y="278" width="244" height="62" rx="8" fill="#ffffff" stroke="#527fff" stroke-width="2"/>
-<text x="1030.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#232f3e">Research KB</text>
-<text x="1030.0" y="320" text-anchor="middle" font-size="11" fill="#687078">MCP server, prior memos</text>
+<text x="904" y="113" font-size="11" font-weight="700" fill="#687078" letter-spacing="0.8">NOT CONNECTED</text>
+<rect x="908" y="160" width="244" height="62" rx="8" fill="#ffffff" stroke="#687078" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="1030.0" y="184" text-anchor="middle" font-size="13.5" font-weight="600" fill="#687078">Market system</text>
+<text x="1030.0" y="202" text-anchor="middle" font-size="11" fill="#687078">not called</text>
+<rect x="908" y="250" width="244" height="62" rx="8" fill="#ffffff" stroke="#687078" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="1030.0" y="274" text-anchor="middle" font-size="13.5" font-weight="600" fill="#687078">Research database</text>
+<text x="1030.0" y="292" text-anchor="middle" font-size="11" fill="#687078">not called</text>
+<rect x="908" y="340" width="244" height="62" rx="8" fill="#ffffff" stroke="#687078" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="1030.0" y="364" text-anchor="middle" font-size="13.5" font-weight="600" fill="#687078">ESG provider</text>
+<text x="1030.0" y="382" text-anchor="middle" font-size="11" fill="#687078">not called</text>
 <line x1="210" y1="143" x2="286" y2="143" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
 <text x="248.0" y="136" text-anchor="middle" font-size="10" fill="#687078">1 request</text>
 <line x1="286" y1="172" x2="212" y2="172" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
@@ -58,20 +58,14 @@
 <line x1="390" y1="220" x2="390" y2="250" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
 <text x="398" y="239.0" font-size="10" fill="#687078">4 MemoState</text>
 <line x1="492" y1="286" x2="548" y2="286" stroke="#687078" stroke-width="1.8"/>
-<line x1="548" y1="149" x2="548" y2="388" stroke="#687078" stroke-width="1.8"/>
+<line x1="548" y1="149" x2="548" y2="333" stroke="#687078" stroke-width="1.8"/>
 <line x1="548" y1="149" x2="578" y2="149" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
 <text x="563.0" y="143" text-anchor="middle" font-size="9.5" fill="#687078">5 model calls</text>
-<line x1="548" y1="229" x2="578" y2="229" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
-<text x="563.0" y="223" text-anchor="middle" font-size="9.5" fill="#687078">6 MCP</text>
-<line x1="548" y1="309" x2="578" y2="309" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
-<text x="563.0" y="303" text-anchor="middle" font-size="9.5" fill="#687078">7 save / load</text>
-<line x1="548" y1="389" x2="578" y2="389" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
-<text x="563.0" y="383" text-anchor="middle" font-size="9.5" fill="#687078">8 spans</text>
-<line x1="820" y1="229" x2="906" y2="229" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
-<text x="863.0" y="222" text-anchor="middle" font-size="10" fill="#687078">9 MCP over HTTP</text>
-<line x1="390" y1="320" x2="390" y2="480" stroke="#687078" stroke-width="1.8"/>
-<line x1="390" y1="480" x2="886" y2="480" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
-<text x="638.0" y="473" text-anchor="middle" font-size="10" fill="#687078">10 market quote and filing text</text>
+<line x1="548" y1="241" x2="578" y2="241" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
+<text x="563.0" y="235" text-anchor="middle" font-size="9.5" fill="#687078">6 save / load</text>
+<line x1="548" y1="333" x2="578" y2="333" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
+<text x="563.0" y="327" text-anchor="middle" font-size="9.5" fill="#687078">7 spans</text>
+<line x1="390" y1="320" x2="390" y2="340" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
 <rect x="40" y="400" width="180" height="162" rx="12" fill="#fafbfc" stroke="#687078" stroke-width="1.5" stroke-dasharray="7 5"/>
 <text x="54" y="421" font-size="11" font-weight="700" fill="#687078" letter-spacing="0.8">LEGEND</text>
 <rect x="58" y="432" width="24" height="14" rx="3" fill="#ffffff" stroke="#ed7100" stroke-width="2"/>
@@ -85,8 +79,8 @@
 <rect x="58" y="528" width="24" height="14" rx="3" fill="#ffffff" stroke="#687078" stroke-width="2"/>
 <text x="90" y="539" font-size="11" fill="#687078">observability</text>
 <rect x="58" y="552" width="24" height="14" rx="3" fill="#ffffff" stroke="#687078" stroke-width="2" stroke-dasharray="5 4"/>
-<text x="90" y="563" font-size="11" fill="#687078">P1, not built</text>
-<text x="40" y="612" font-size="12.5" font-weight="700" fill="#232f3e">Two things that break in their cloud but not locally</text>
-<text x="40" y="634" font-size="11.5" fill="#687078">The session is reclaimed while a reviewer is still reading, so every resume rehydrates from S3 rather than memory.</text>
-<text x="40" y="654" font-size="11.5" fill="#687078">The Gateway enforces tenant identity from the signed JWT, where the local mock trusts whatever tenant the client claims.</text>
+<text x="90" y="563" font-size="11" fill="#687078">not connected</text>
+<text x="40" y="612" font-size="12.5" font-weight="700" fill="#232f3e">Two things that break in their account and do not break locally</text>
+<text x="40" y="634" font-size="11.5" fill="#687078">The US inference profile can send a prompt to another US region. A local call has no residency check that fails.</text>
+<text x="40" y="654" font-size="11.5" fill="#687078">The research client starts a subprocess on this machine. Their research server is not on that machine.</text>
 </svg>

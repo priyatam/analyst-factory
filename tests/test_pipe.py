@@ -211,16 +211,15 @@ def test_a_value_needs_both_a_citation_and_a_confidence(deps):
             run(orchestrator.run(NVDA, deps(Model(bad))))
 
 
-def test_a_metric_the_sources_do_not_state_goes_to_review(deps):
-    """No value means nothing to cite. It must not crash the run; gate 1 flags it instead."""
+def test_a_metric_the_text_never_mentions_is_omitted(deps):
+    """An unmentioned metric is not a finding. A stated figure can still go straight to compliance."""
     absent = fields(capex_outlook={"value": None, "excerpt": "", "confidence": None,
                                    "reason": "not stated", "source_id": ""})
 
     result = run(orchestrator.run(NVDA, deps(Model(absent))))
 
-    assert result["gate"] == "senior_review"
-    assert result["flagged"] == ["capex_outlook"]
-    assert result["values"]["capex_outlook"]["confidence"] == 0.0
+    assert "capex_outlook" not in result["values"]
+    assert result["gate"] == "compliance_review"
 
 
 def test_invented_citation_fails_closed(deps):

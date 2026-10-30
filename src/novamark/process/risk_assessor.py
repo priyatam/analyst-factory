@@ -15,7 +15,8 @@ Text:
 {text}
 """
 
-SEVERE = ("concentrat", "export control")
+# Customer concentration and export controls. A supplier "concentrated with" does not match.
+SEVERE = ("concentrated among", "export control")
 
 
 def parse(text: str) -> list[str]:

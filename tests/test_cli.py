@@ -78,6 +78,16 @@ def test_a_rejection_is_explained_before_the_next_prompt():
     assert "scores are unchanged" in compliance
 
 
+def test_the_demo_runs_the_clean_filing_unless_high_risk_is_set():
+    from demo import arguments, selected
+
+    assert selected(False) == (("tidy filing", "AAPL"),)
+    assert selected(True) == (("high risk filing", "NVDA"),)
+    parsed = arguments().parse_args(["--auto-approve", "--high-risk"])
+    assert parsed.auto_approve and parsed.high_risk
+    assert arguments().parse_args([]).auto_approve is False
+
+
 def test_a_review_answer_needs_an_action_and_a_name():
     from demo import decision
 

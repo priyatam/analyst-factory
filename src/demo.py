@@ -1,12 +1,13 @@
-"""Run both paths against the deployed AgentCore Runtime.
+"""Run one memo against the deployed AgentCore Runtime.
 
     export NOVAMARK_RUNTIME_ARN=<runtime ARN>
-    uv run python src/demo.py            # ask at each review
-    uv run python src/demo.py --auto     # approve each review, no one at the keyboard
+    uv run python src/demo.py                 # clean filing, ask at compliance
+    uv run python src/demo.py --high-risk     # high-risk filing, ask at both reviews
+    uv run python src/demo.py --auto-approve  # approve without asking
 
-The display is `cli.py`. A tidy filing (AAPL) and a garbled one (NVDA) each pause for a
-senior analyst and a compliance officer. Every new run makes real model calls, billed
-to the account that owns the runtime.
+The display is `cli.py`. The default ticker is the tidy filing (AAPL), which skips the
+senior analyst. `--high-risk` runs the garbled filing (NVDA), which stops for that
+review. Every new run makes real model calls, billed to the account that owns the runtime.
 """
 import sys
 
@@ -15,8 +16,14 @@ from rich.prompt import Prompt
 
 from cli import require_arn, run
 
-RUNS = (("tidy filing", "AAPL"), ("garbled filing", "NVDA"))
+CLEAN = ("tidy filing", "AAPL")
+HIGH_RISK = ("high risk filing", "NVDA")
 ACTIONS = ("approve", "reject")
+
+
+def selected(high_risk: bool) -> tuple[tuple[str, str], ...]:
+    """The clean filing, or the high-risk filing when the flag is set."""
+    return (HIGH_RISK,) if high_risk else (CLEAN,)
 
 
 def decision(action: str, reviewer: str, comment: str) -> dict:
@@ -57,24 +64,31 @@ def reviewer():
 
 def auto(packet: dict, console: Console) -> dict:
     """Approve without asking. The reviewer name is the demo, not a person."""
-    return decision("approve", "demo", f"approved {packet['gate']} with --auto")
+    return decision("approve", "demo", f"approved {packet['gate']} with --auto-approve")
+
+
+def arguments():
+    """The demo flags. `--auto-approve` skips the prompts. `--high-risk` selects NVDA."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run one memo on the deployed runtime")
+    parser.add_argument("--auto-approve", action="store_true",
+                        help="approve each review without asking")
+    parser.add_argument("--high-risk", action="store_true",
+                        help="run the high-risk filing (NVDA) instead of the clean one")
+    return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Both runs. `--auto` approves every review. Otherwise the demo asks."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Run both memos on the deployed runtime")
-    parser.add_argument("--auto", action="store_true",
-                        help="approve each review without asking")
-    args = parser.parse_args(argv)
+    """One run. `--high-risk` selects NVDA. `--auto-approve` approves every review."""
+    args = arguments().parse_args(argv)
     try:
         arn = require_arn()
     except SystemExit as exc:
         print(exc, file=sys.stderr)
         return 1
-    decide = auto if args.auto else reviewer()
-    for label, ticker in RUNS:
+    decide = auto if args.auto_approve else reviewer()
+    for label, ticker in selected(args.high_risk):
         code = run(arn, ticker, label, decide=decide)
         if code:
             return code

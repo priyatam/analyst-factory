@@ -1,11 +1,11 @@
 """Invoke the deployed runtime and draw the state machine as it moves.
 
     uv run python src/cli.py NVDA
-    uv run python src/demo.py          # both tickers, through this module
+    uv run python src/demo.py          # the clean filing, through this module
 
 Each box is one state. It fills in when the runtime returns, because a call blocks until
 the run pauses at a review or finishes. This command does not approve a review. The demo
-does, either by asking or with `--auto`. Every new run makes real model calls.
+does, either by asking or with `--auto-approve`. Every new run makes real model calls.
 """
 import json
 import os

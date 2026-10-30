@@ -109,7 +109,7 @@ The session enters through `BedrockAgentCoreApp` and a single synchronous `invok
 
 State is kept in S3 because the session ends between the two reviews. Inference uses the `us.` Bedrock inference profile, which can route a request to another US region, so a customer that requires a single region would need a regional model id instead.
 
-The design intends the firm's own systems to sit behind AgentCore Gateway, but that is not built. Today both are the case-study mocks and both run inside the agent, locally and on AWS: the market API is the mock app called in process (or over HTTP when `MARKET_API_URL` is set), and the knowledge base is an MCP server started over stdio. A deployed memo therefore uses mock market and prior-research data.
+The market quote and the prior research are the case-study mocks, and both run inside the agent, locally and on AWS. The market mock is called in this process. The research knowledge base is `mock_mcp_research_kb_server.py`, started as a subprocess and spoken to over stdio. NovaMark's market system, research database, and ESG provider are not connected. A later path is HTTP behind AgentCore Gateway, with the tenant taken from the verified identity rather than from `params._meta.tenant_id`. That path is not built. Set `MARKET_API_URL` to call a market service over HTTP instead of the in-process mock.
 
 ## Scalability and reliability
 
