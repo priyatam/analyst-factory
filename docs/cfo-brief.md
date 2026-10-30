@@ -1,17 +1,9 @@
 # Brief for the CFO
 
-The prototype turns one ticker request into an equity memo that can be reviewed and kept. A senior analyst clears the weak figures. A compliance officer approves the memo. The figure, its source sentence, and both decisions stay on the record.
+Fifteen analysts still build each equity memo by hand from the research database, public filings, and the ESG provider. A memo takes 4–6 hours, and about 65% of that time is gathering. Compliance then takes 2–3 days. Nothing produced with AI today has an audit record, and the same request does not come back with the same figures: consistency across analysts is 58%. The firm set five targets: a memo in under 45 minutes, gathering under 20% of analyst time, a compliance decision the same day, a complete record, and consistency above 90%.
 
-On the labelled filings used for this proof of concept, the baseline meets each target the firm set.
+The prototype takes one ticker request and returns a memo a senior analyst and a compliance officer can approve. On the labelled filings used for this proof of concept, the draft reached the first review in seconds. With the 5–15 minute review estimate, the memo is about 10 minutes. Gathering on these cases was about 0%, because the prototype retrieved the quote, the filing, and the prior notes. The memo was ready for compliance as soon as the draft was finished, so the 2–3 day cycle becomes that same review. Each published memo keeps the figure, the sentence it came from, and the name of the person who approved it. Where the extracted figures matched the values a person had written down, agreement was 100%.
 
-| | Today | Target | This prototype |
-| --- | --- | --- | --- |
-| Memo time | 4–6 hours | under 45 minutes | about 10 minutes |
-| Time gathering | about 65% | under 20% | about 0% |
-| Compliance cycle | 2–3 days | same day | 5–15 minutes |
-| Audit coverage | none | complete | complete |
-| Consistency | 58% | above 90% | 100% when the figures match |
+That baseline is the projection. It describes a desk that spends its time on the judgment in the memo. At list price the model charge is about $0.03 a memo, about $28 for 1,000 tickers and about $2,800 for 100,000, for a memo of this length approved once. A longer filing or a memo sent back for revision adds to the charge in proportion. The 10 minutes still includes an estimated review. It becomes a measured cycle when the firm records how long the officer takes.
 
-The model charge is about $0.03 a memo. That is about $28 for 1,000 tickers and about $2,800 for 100,000.
-
-The two reviewers still approve every memo. The same evaluation, run on the firm's own memos, is how those five numbers are confirmed and improved. Connecting market data, the research database, and the ESG provider is the next addition.
+Production rollout includes gathering the firm's data sets, from the memos of the past few years, to evaluate performance and improve the operational efficiency of the workforce. Market data, the research database, and the ESG provider connect on that rollout. The senior analyst and the compliance officer still approve every memo.

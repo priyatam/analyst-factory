@@ -63,13 +63,7 @@ class MemoState(TypedDict):
     "source_id": "DOC-NVDA-10K"}
 ```
 
-| Field | Meaning |
-| --- | --- |
-| `value`, `excerpt`, `source_id` | the model's answer: the figure, the exact sentence it read it from, and which document that sentence is in. `value` is null when the filing does not state the metric |
-| `confidence`, `reason` | the model's own 0 to 1 score and one-sentence why. The code lowers it to 0.5 when an amount has no scale word, or the value is null, and prefixes the reason |
-| `model_id`, `produced_at`, `step` | added by the code, not the model: which model, when, and which process produced the entry |
-
-The filing prints `Gaming $11,900` beside `$115.2 billion` with no scale word, so `11900` cannot be compared with the other figures. The code caps the confidence at 0.5, which is under the 0.75 floor, so the run stops at `senior_review` with this value flagged. A metric the filing does not state stays in `values` with a null value, so a reviewer sees it as missing and does not simply never see it. [`evidence_check`](../src/novamark/process/evidence_check.py) requires every value that is not null to have an excerpt and a confidence, and the excerpt must appear in `sources[source_id]`.
+The filing prints `Gaming $11,900` beside `$115.2 billion` with no scale word, so the code caps confidence at 0.5 and the run stops at `senior_review`. A metric the filing does not state stays in `values` with a null value. [`evidence_check`](../src/novamark/process/evidence_check.py) requires every non-null value to have an excerpt that appears in `sources[source_id]`, and a confidence. The code, not the model, records `model_id`, `produced_at`, and `step`.
 
 **Execution**
 
@@ -81,23 +75,13 @@ Each time a run stops, the orchestrator appends the whole state as the next numb
 
 ```
 runs/run-1/001-compliance_review.json
-{
-  "run_id": "run-1",
-  "request": {"ticker": "NVDA", "asset_class": "equity", "analysis_type": "memo"},
-  "status": "compliance_review",
-  "revision": 0,
-  "sources": {"DOC-NVDA-10K": "...filing text..."},
-  "values": {"segment_gaming": {"value": 11900, "confidence": 0.5, "...": "..."}},
-  "risk": {"level": "medium", "reasons": ["..."]},
-  "gaps": [{"source": "market", "reason": "..."}],
-  "decisions": [{"gate": "senior_review", "action": "approve", "reviewer": "pri",
-                 "comment": "ok", "decided_at": "2026-10-29T09:20:11Z", "id": ""}],
-  "memo": "NVDA investment memo ...",
-  "applied": []
-}
+{ "status": "compliance_review", "revision": 0,
+  "values": {"segment_gaming": {"value": 11900, "confidence": 0.5}},
+  "decisions": [{"gate": "senior_review", "action": "approve", "reviewer": "pri"}],
+  "memo": "NVDA investment memo ..." }
 ```
 
-`000-senior_review.json` is the state at the first review, before the decision: `decisions` is empty and `memo` is null. `load` returns the highest key, and listing the prefix replays the run in order, so an auditor who opens `001` sees exactly what the compliance officer saw.
+`load` returns the highest key. Listing the prefix replays the run, so an auditor who opens `001` sees the state the compliance officer saw.
 
 ## Runtime
 
@@ -109,7 +93,7 @@ The session enters through `BedrockAgentCoreApp` and a single synchronous `invok
 
 State is kept in S3 because the session ends between the two reviews. Inference uses the `us.` Bedrock inference profile, which can route a request to another US region, so a customer that requires a single region would need a regional model id instead.
 
-The market quote and the prior research are the case-study mocks, and both run inside the agent, locally and on AWS. The market mock is called in this process. The research knowledge base is `mock_mcp_research_kb_server.py`, started as a subprocess and spoken to over stdio. NovaMark's market system, research database, and ESG provider are not connected. A later path is HTTP behind AgentCore Gateway, with the tenant taken from the verified identity rather than from `params._meta.tenant_id`. That path is not built. Set `MARKET_API_URL` to call a market service over HTTP instead of the in-process mock.
+The market quote and the prior research are case-study mocks inside the agent, locally and on AWS. NovaMark's market system, research database, and ESG provider are not connected. Set `MARKET_API_URL` to call a market service over HTTP instead of the in-process mock.
 
 ## Scalability and reliability
 
@@ -117,29 +101,7 @@ The market quote and the prior research are the case-study mocks, and both run i
 
 **Reliability.** The snapshot is the unit of recovery. If a session dies, the run resumes from its latest snapshot, which is the last review, or starts again if it never reached one. A decision with an id is applied once, so a retried call cannot double-apply. A snapshot is written once, so a retry cannot overwrite history. A failed source becomes a gap and the run continues, and a value that fails the evidence check stops the run before a reviewer sees it. A 429 from the market API is retried after its `Retry-After`.
 
-**Path to more scale.** These are the limits today and what removes each:
-
-| Limit today | Next step |
-| --- | --- |
-| A throttled Bedrock call is not retried, so a burst of runs can stop with a 429 | retry with backoff in `model.ask`, raise the Bedrock quota, and put a queue in front of `start` to smooth bursts |
-| Only reviews and the end are saved, so a crash mid-run repeats the work | save after each transition, at the cost of more snapshots |
-| The snapshot sequence is an object count, so two concurrent writers collide and one fails | retry on conflict with a fresh count |
-| `quote_once` blocks the event loop, so the two fetches run one after the other | switch to `httpx.AsyncClient` |
-| A span is one pass of `advance` or one model call, exported to CloudWatch; the wait at a review is not a span, because the session ends | keep the session open across that wait |
-
-## Review decisions
-
-[`gates.decide`](../src/novamark/process/gates.py) checks the reviewer's role first: a senior analyst clears `senior_review` and a compliance officer clears `compliance_review`.
-
-| Action | Effect |
-| --- | --- |
-| approve | set the gate's next status |
-| amend | overwrite the named values, stamped `human_amend` at confidence 1.0, then continue |
-| reject | increment `revision` and return to the producing process, or escalate at three |
-
-A decision that carries an id is applied once, so a retried call returns the state unchanged.
-
-Two checks are not enforced yet: the decision's `gate` is never compared with the run's current `status`, and the requester is not recorded. See [Security](#security).
+A throttled Bedrock call is not retried, only the reviews and the end are saved, and two writers of the same run can collide on the snapshot count. Those limits are tracked in [code-reviews.md](code-reviews.md).
 
 ## Security
 
@@ -153,15 +115,13 @@ Two checks are not enforced yet: the decision's `gate` is never compared with th
 
 | Condition                                                               | Result                                                     |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 429 from the market API∑                                                | retry with `Retry-After`, up to three attempts, then a gap |
+| 429 from the market API                                                 | retry with `Retry-After`, up to three attempts, then a gap |
 | Other market error, missing filing, unreachable knowledge base          | gap, no retry; the run continues and the memo states it    |
 | Value without a citation or confidence; excerpt not found in its source | run stops with `EvidenceError`                             |
 | Malformed model JSON                                                    | run stops                                                  |
 | Failed store write                                                      | run stops; no packet is returned                           |
 
-A gap is passed to the review packet and stated in the memo. A stop returns an error and no packet, so a reviewer is never asked to approve a state that was not saved or a value that was invented.
-
-Two limits apply. The analyser still runs when the quote and the prior memos are both missing, so a memo can be written from filing text alone, with only `senior_review` standing in the way. And a failed store write is not retried, because repeating a write whose outcome is unknown is how duplicate decisions get created.
+A gap is stated in the memo. A stop returns an error and no packet. A failed store write is not retried.
 
 ## Cost
 
@@ -177,15 +137,11 @@ A memo that is approved without a rejection makes three calls: extract the figur
 
 Output tokens are about four-fifths of that. At this token count, 1,000 tickers are $28 and 100,000 tickers are $2,800.
 
-That number depends on all of the following.
+## Assumptions
 
-- The filing is an excerpt of the size already run, not a full 10-K. Input tokens move with the length of the filing and the prior notes.
-- The memo stays about one page. A longer memo raises the output line, which is most of the bill.
-- Each ticker is approved once. A senior rejection repeats extract and risk. A compliance rejection repeats the memo. The cap is three revisions.
-- The rate stays $3 and $15. The runtime calls the US inference profile. A different rate on that profile scales the table by the same factor.
-- No prompt caching and no batch inference. Batch list price is half, and this path does not use it.
-
-Runtime, the state bucket, and logs are separate from this forecast.
+- The cloud provider is AWS. The run, the model call, and the saved state stay in the customer's account.
+- The workforce is model agnostic. The model id is one setting, and this build uses Claude Sonnet 4.6.
+- The firm's evaluation data set is available after the proof of concept, and production rollout uses it to evaluate performance and improve the operational efficiency of the workforce.
 
 ## Evals
 
