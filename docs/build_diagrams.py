@@ -295,7 +295,7 @@ def reply(c: Canvas, x1, x2, y, label, *, color=GRAY):
 
 
 def span(c: Canvas, x1, x2, y, label):
-    """A telemetry span sent to CloudWatch: the end state, not instrumented yet."""
+    """A telemetry span sent to CloudWatch, one per advance pass or model call."""
     c.add(f'<line x1="{x1}" y1="{y}" x2="{x2}" y2="{y}" stroke="{PURPLE}" stroke-width="1.4" '
           f'stroke-dasharray="2 3" marker-end="url(#a{PURPLE.strip("#")})"/>')
     note(c, (x1 + x2) / 2, y - 7, label, color=PURPLE)
@@ -355,7 +355,7 @@ def execution() -> None:
 
     c.add(f'<line x1="34" y1="896" x2="62" y2="896" stroke="{PURPLE}" stroke-width="1.4" '
           f'stroke-dasharray="2 3" marker-end="url(#a{PURPLE.strip("#")})"/>')
-    note(c, 72, 900, "span: end-state design, not instrumented yet (see code-reviews.md)",
+    note(c, 72, 900, "span: one advance pass or one model call, exported to CloudWatch",
          anchor="start", size=10)
 
     c.save("execution")

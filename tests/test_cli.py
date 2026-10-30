@@ -1,4 +1,6 @@
 """The live display, without calling the runtime."""
+import json
+
 import pytest
 from rich.console import Console
 
@@ -86,6 +88,90 @@ def test_the_demo_runs_the_clean_filing_unless_high_risk_is_set():
     parsed = arguments().parse_args(["--auto-approve", "--high-risk"])
     assert parsed.auto_approve and parsed.high_risk
     assert arguments().parse_args([]).auto_approve is False
+
+
+def test_the_audit_flag_parses_and_does_not_approve():
+    from demo import arguments
+
+    parsed = arguments().parse_args(["--audit"])
+
+    assert parsed.audit is True
+    assert parsed.auto_approve is False
+    assert parsed.high_risk is False
+    assert arguments().parse_args([]).audit is False
+
+
+def test_the_audit_view_includes_the_run_the_status_and_a_metric():
+    from cli import show_state
+
+    console = Console(width=120, force_terminal=True, record=True)
+    show_state({"run_id": "run-9", "status": "published", "revision": 0,
+                "request": {"ticker": "AAPL"}, "sources": {},
+                "values": {"revenue": {"value": 391.0, "confidence": 0.91, "excerpt": "net sales"}},
+                "risk": None, "prior_memos": None, "gaps": [], "freshness": {},
+                "decisions": [], "memo": None, "applied": []}, console)
+
+    text = console.export_text()
+    assert "run-9" in text
+    assert "published" in text
+    assert "revenue" in text
+
+
+def test_the_audit_trace_is_read_from_cloudwatch_and_printed_as_spans():
+    from cli import fetch_trace, show_trace
+
+    class Logs:
+        def filter_log_events(self, **kwargs):
+            pattern = kwargs["filterPattern"]
+            runtime = "arn:aws:bedrock-agentcore:us-west-2:1:runtime/novamark_research-id"
+            resource = {"attributes": {"cloud.resource_id": runtime, "service.name": "novamark"}}
+            if pattern == '"run-9"' and kwargs["logGroupName"].endswith("-DEFAULT"):
+                return {"events": [{"message": json.dumps({
+                    "name": "advance", "traceId": "trace-1", "spanId": "span-a",
+                    "resource": resource,
+                    "attributes": {"run_id": "run-9", "status": "document_analyser", "revision": 0},
+                    "startTimeUnixNano": "1000000000", "endTimeUnixNano": "1600000000"})}]}
+            if pattern == '"trace-1"' and kwargs["logGroupName"] == "aws/spans":
+                return {"events": [
+                    {"message": json.dumps({
+                        "name": "chat", "traceId": "trace-1", "spanId": "span-b",
+                        "parentSpanId": "span-a", "resource": resource,
+                        "attributes": {"gen_ai.request.model": "us.anthropic.claude-sonnet-4-6",
+                                       "gen_ai.usage.input_tokens": 592,
+                                       "gen_ai.usage.output_tokens": 442},
+                        "startTimeUnixNano": "1100000000", "endTimeUnixNano": "1500000000"})},
+                    {"message": json.dumps({
+                        "name": "GET /api/v1/market/quote", "traceId": "trace-1", "spanId": "span-c",
+                        "parentSpanId": "span-a", "resource": resource,
+                        "attributes": {"http.status_code": 200},
+                        "startTimeUnixNano": "1050000000", "endTimeUnixNano": "1200000000"})},
+                    {"message": json.dumps({
+                        "name": "fastapi.endpoint", "traceId": "trace-1", "spanId": "span-d",
+                        "startTimeUnixNano": "1060000000", "endTimeUnixNano": "1070000000"})},
+                ]}
+            return {"events": []}
+
+    events = fetch_trace("arn:aws:bedrock-agentcore:us-west-2:1:runtime/novamark_research-id",
+                         "run-9", client=Logs())
+    console = Console(width=200, force_terminal=True, record=True)
+    show_trace(events, console)
+    text = console.export_text()
+
+    assert "CloudWatch Logs" in text
+    header = next(line for line in text.splitlines() if "identity" in line and "action" in line)
+    assert header.index("identity") < header.index("action")
+    assert "Identity: arn:aws:bedrock-agentcore:us-west-2:1:runtime/novamark_research-id" in text
+    assert "(alias=novamark)" in text
+    assert text.index("Identity:") < text.index(header)
+    assert "novamark" in text
+    assert "document_analyser" in text
+    assert "model" in text
+    assert "Tokens: 592 in, 442 out" in text
+    assert "592 in, 442 out" in text
+    assert "revision 0" in text
+    assert "GET /api/v1/market/quote" in text
+    assert "fastapi" not in text
+    assert "600" in text
 
 
 def test_a_review_answer_needs_an_action_and_a_name():

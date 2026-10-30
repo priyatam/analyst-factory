@@ -61,7 +61,10 @@ The demo stops at each review and asks you to approve or reject. It asks for you
 uv run python src/demo.py --high-risk
 uv run python src/demo.py --auto-approve
 uv run python src/demo.py --high-risk --auto-approve
+uv run python src/demo.py --audit
 ```
+
+`--audit` prints the last run's complete memo state from the state bucket, then the actions CloudWatch Logs recorded for that run. The runtime ARN is printed once above the table, with the service alias, and the run's token total under it. Each row names that identity, then the process, and under that the model calls, market quote, and MCP reads. A model row shows its own input and output tokens. It does not start a memo.
 
 **What you see.** One memo. Each state is a colored box. It fills in when the runtime answers, and the current review is highlighted. The run continues only after that review is decided.
 

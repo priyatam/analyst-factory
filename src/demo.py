@@ -4,17 +4,19 @@
     uv run python src/demo.py                 # clean filing, ask at compliance
     uv run python src/demo.py --high-risk     # high-risk filing, ask at both reviews
     uv run python src/demo.py --auto-approve  # approve without asking
+    uv run python src/demo.py --audit         # snapshot, then the CloudWatch actions
 
 The display is `cli.py`. The default ticker is the tidy filing (AAPL), which skips the
 senior analyst. `--high-risk` runs the garbled filing (NVDA), which stops for that
 review. Every new run makes real model calls, billed to the account that owns the runtime.
 """
 import sys
+import urllib.error
 
 from rich.console import Console
 from rich.prompt import Prompt
 
-from cli import require_arn, run
+from cli import fetch_trace, invoke, require_arn, run, show_state, show_trace
 
 CLEAN = ("tidy filing", "AAPL")
 HIGH_RISK = ("high risk filing", "NVDA")
@@ -68,7 +70,10 @@ def auto(packet: dict, console: Console) -> dict:
 
 
 def arguments():
-    """The demo flags. `--auto-approve` skips the prompts. `--high-risk` selects NVDA."""
+    """The demo flags. `--auto-approve` skips the prompts. `--high-risk` selects NVDA.
+
+    `--audit` prints the last snapshot, then the actions CloudWatch recorded for it.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Run one memo on the deployed runtime")
@@ -76,17 +81,35 @@ def arguments():
                         help="approve each review without asking")
     parser.add_argument("--high-risk", action="store_true",
                         help="run the high-risk filing (NVDA) instead of the clean one")
+    parser.add_argument("--audit", action="store_true",
+                        help="print the last snapshot, then its CloudWatch actions")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    """One run. `--high-risk` selects NVDA. `--auto-approve` approves every review."""
+    """One run. `--high-risk` selects NVDA. `--auto-approve` approves every review.
+
+    `--audit` prints the last snapshot, then the actions CloudWatch recorded for it.
+    """
     args = arguments().parse_args(argv)
     try:
         arn = require_arn()
     except SystemExit as exc:
         print(exc, file=sys.stderr)
         return 1
+    if args.audit:
+        try:
+            state = invoke(arn, {"type": "audit"})
+        except (RuntimeError, urllib.error.URLError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        show_state(state)
+        try:
+            show_trace(fetch_trace(arn, state["run_id"]))
+        except Exception as exc:
+            print(f"Agent trace from CloudWatch Logs could not be read: {exc}", file=sys.stderr)
+            return 1
+        return 0
     decide = auto if args.auto_approve else reviewer()
     for label, ticker in selected(args.high_risk):
         code = run(arn, ticker, label, decide=decide)

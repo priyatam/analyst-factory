@@ -28,7 +28,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 
 from novamark.model import REGION
-from novamark.state import Status
+from novamark.state import MemoState, Status
 
 ORDER = (
     Status.DATA_COLLECTOR, Status.DOCUMENT_ANALYSER, Status.SENIOR_REVIEW,
@@ -203,6 +203,262 @@ def body(view: dict):
 
 def screen(view: dict) -> Group:
     return Group(track(view), body(view))
+
+
+def show_state(state: dict, console: Console | None = None) -> None:
+    """Pretty-print one MemoState. Every schema field is a row."""
+    console = console or Console()
+    table = Table(show_header=True, header_style="bold", expand=True, show_lines=True)
+    table.add_column("field", style="bold", no_wrap=True)
+    table.add_column("value")
+    for field in MemoState.__annotations__:
+        table.add_row(field, escape(plain(state.get(field))))
+    console.print(Panel(table, title="MemoState", border_style="green"))
+
+
+def trace_groups(arn: str) -> list[str]:
+    """Where this runtime's spans and agent logs are written."""
+    runtime_id = arn.split(":runtime/", 1)[-1]
+    return [f"/aws/bedrock-agentcore/runtimes/{runtime_id}-DEFAULT", "/novamark/agent", "aws/spans"]
+
+
+def _attr_value(value):
+    """One OpenTelemetry attribute, whether it is a bare value or a typed wrapper."""
+    if isinstance(value, dict):
+        for key in ("stringValue", "intValue", "doubleValue", "boolValue"):
+            if key in value:
+                return value[key]
+    return value
+
+
+def _attributes(raw) -> dict:
+    if isinstance(raw, dict):
+        return {key: _attr_value(value) for key, value in raw.items()}
+    if isinstance(raw, list):
+        return {item["key"]: _attr_value(item.get("value"))
+                for item in raw if isinstance(item, dict) and item.get("key")}
+    return {}
+
+
+def span_record(message: str) -> dict | None:
+    """One CloudWatch log line as a span, or nothing if the line is not a span."""
+    try:
+        body = json.loads(message)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(body, dict):
+        return None
+    name = body.get("name") or body.get("spanName")
+    if not name:
+        return None
+    attrs = _attributes(body.get("attributes") or body.get("annotations") or {})
+    start, end = body.get("startTimeUnixNano"), body.get("endTimeUnixNano")
+    duration = ""
+    start_ns = 0
+    if start is not None and end is not None:
+        try:
+            start_ns = int(start)
+            duration = f"{(int(end) - start_ns) / 1_000_000:.0f}"
+        except (TypeError, ValueError):
+            duration = ""
+    model = attrs.get("model_id") or attrs.get("gen_ai.request.model") or ""
+    resource = _attributes((body.get("resource") or {}).get("attributes") or {})
+    identity = str(resource.get("cloud.resource_id") or "")
+    alias = str(resource.get("service.name") or "")
+    if not alias and ":runtime/" in identity:
+        alias = identity.split(":runtime/", 1)[1].split("/", 1)[0]
+    return {"name": str(name), "trace_id": str(body.get("traceId") or ""),
+            "span_id": str(body.get("spanId") or ""), "start": start_ns,
+            "identity": identity, "alias": alias,
+            "status": str(attrs.get("status") or ""),
+            "revision": "" if "revision" not in attrs else str(attrs.get("revision")),
+            "model": str(model), "mcp": str(attrs.get("mcp.method.name") or ""),
+            "http_status": str(attrs.get("http.status_code") or ""),
+            "input_tokens": attrs.get("gen_ai.usage.input_tokens"),
+            "output_tokens": attrs.get("gen_ai.usage.output_tokens"),
+            "duration_ms": duration}
+
+
+def _filter_events(client, group: str, pattern: str, start: int):
+    """Pages of one CloudWatch filter. A missing or forbidden group is skipped."""
+    from botocore.exceptions import ClientError
+
+    token = None
+    for _ in range(20):
+        kwargs = {"logGroupName": group, "filterPattern": pattern, "startTime": start, "limit": 100}
+        if token:
+            kwargs["nextToken"] = token
+        try:
+            response = client.filter_log_events(**kwargs)
+        except ClientError as exc:
+            if exc.response.get("Error", {}).get("Code") in ("ResourceNotFoundException", "AccessDeniedException"):
+                return
+            raise
+        events = response.get("events", [])
+        yield from events
+        nxt = response.get("nextToken")
+        if not events or not nxt or nxt == token:
+            return
+        token = nxt
+
+
+def _unique_spans(events: list) -> list[dict]:
+    """Drop a span that the run-id query and the trace-id query both returned."""
+    seen = set()
+    unique = []
+    for event in events:
+        message = event.get("message", "") if isinstance(event, dict) else ""
+        record = span_record(message)
+        key = record["span_id"] if record and record["span_id"] else message
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique.append(event)
+    return unique
+
+
+def fetch_trace(arn: str, run_id: str, client=None) -> list[dict]:
+    """Every span in the traces that contain this run. The last day only.
+
+    The run id is on the `advance` span. The actions (model calls, the market
+    quote, MCP reads) are other spans in that same trace, so the second query
+    is by trace id.
+    """
+    import time
+
+    client = client or boto3.client("logs", region_name=REGION)
+    start = int((time.time() - 24 * 3600) * 1000)
+    groups = trace_groups(arn)
+    found = []
+    for group in groups:
+        found.extend(_filter_events(client, group, f'"{run_id}"', start))
+    trace_ids = []
+    for event in found:
+        record = span_record(event.get("message", "") if isinstance(event, dict) else "")
+        if record and record["trace_id"] and record["trace_id"] not in trace_ids:
+            trace_ids.append(record["trace_id"])
+    for trace_id in trace_ids:
+        for group in groups:
+            found.extend(_filter_events(client, group, f'"{trace_id}"', start))
+    return _unique_spans(found)
+
+
+def _keep_span(record: dict, names: set[str]) -> bool:
+    """Framework plumbing and the Strands spans that repeat a model call."""
+    name = record["name"]
+    if name.startswith(("fastapi.", "invoke_agent")) or name in ("execute_event_loop_cycle", "mcp.session"):
+        return False
+    return not (name == "model.call" and "chat" in names)
+
+
+def _action(record: dict) -> str:
+    if record["name"] == "advance":
+        return record["status"] or "advance"
+    if record["name"] in ("chat", "model.call"):
+        return "model"
+    if record["mcp"]:
+        return f"MCP {record['mcp']}"
+    return record["name"]
+
+
+def _count(value) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _tokens(record: dict) -> str:
+    """Input and output tokens for one model call."""
+    incoming, outgoing = _count(record["input_tokens"]), _count(record["output_tokens"])
+    if incoming is None or outgoing is None:
+        return ""
+    return f"{incoming} in, {outgoing} out"
+
+
+def _token_total(records: list[dict]) -> str:
+    """Tokens across the model calls this run shows. A repeated span is not counted twice."""
+    incoming = outgoing = 0
+    found = False
+    for record in _visible(records):
+        inn, out = _count(record["input_tokens"]), _count(record["output_tokens"])
+        if inn is None or out is None:
+            continue
+        incoming += inn
+        outgoing += out
+        found = True
+    return f"{incoming} in, {outgoing} out" if found else ""
+
+
+def _detail(record: dict) -> str:
+    if record["name"] == "advance":
+        return f"revision {record['revision']}" if record["revision"] != "" else ""
+    parts = []
+    if record["model"]:
+        parts.append(record["model"])
+    if record["http_status"]:
+        parts.append(record["http_status"])
+    return "  ".join(parts)
+
+
+def _visible(records: list[dict]) -> list[dict]:
+    """Spans worth a row, each process before the calls it made."""
+    grouped: dict[str, list[dict]] = {}
+    for record in records:
+        grouped.setdefault(record["trace_id"], []).append(record)
+    visible = []
+    for group in sorted(grouped.values(), key=lambda items: min(item["start"] for item in items)):
+        names = {item["name"] for item in group}
+        visible.extend(sorted((item for item in group if _keep_span(item, names)),
+                              key=lambda item: (item["name"] != "advance", item["start"])))
+    return visible
+
+
+def _action_rows(records: list[dict]) -> list[tuple[str, str, str, str, str]]:
+    """One row per action, the process first and its calls indented under it."""
+    rows = []
+    for record in _visible(records):
+        label = _action(record)
+        if record["name"] != "advance":
+            label = f"  {label}"
+        rows.append((record["alias"], label, _detail(record), _tokens(record), record["duration_ms"]))
+    return rows
+
+
+def show_trace(events: list, console: Console | None = None) -> None:
+    """The actions CloudWatch recorded for one run, after the line that says so."""
+    console = console or Console()
+    console.print("Agent trace from CloudWatch Logs: the actions recorded for this run.")
+    records = []
+    for event in events:
+        message = event.get("message", "") if isinstance(event, dict) else ""
+        record = span_record(message)
+        if record:
+            records.append(record)
+    rows = _action_rows(records)
+    if not rows:
+        console.print("No spans for this run are in CloudWatch yet.")
+        return
+    shown = []
+    for record in _visible(records):
+        if record["identity"] and record["identity"] not in shown:
+            shown.append(record["identity"])
+            alias = f" (alias={record['alias']})" if record["alias"] else ""
+            console.print(f"Identity: {record['identity']}{alias}", markup=False)
+    usage = _token_total(records)
+    if usage:
+        console.print(f"Tokens: {usage}", markup=False)
+    table = Table(show_header=True, header_style="bold", expand=True)
+    table.add_column("identity")
+    table.add_column("action", overflow="fold")
+    table.add_column("detail", overflow="fold", ratio=2)
+    table.add_column("tokens", justify="right")
+    table.add_column("ms", justify="right", no_wrap=True)
+    for alias, action, detail, tokens, duration in rows:
+        table.add_row(alias, action, detail, tokens, duration)
+    console.print(table)
 
 
 def run(arn: str, ticker: str, label: str, *, decide=None, console: Console | None = None) -> int:

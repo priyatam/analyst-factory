@@ -1,13 +1,11 @@
 # Deployment
 
-NovaMark will not let customer data leave their own cloud. This prototype runs there.
+![NovaMark research workforce: deployment](img/deployment.svg)
 
-The agent, the saved state, and the model call are in NovaMark's AWS account, in the region the stack is deployed to (this build uses us-west-2). A request arrives at AgentCore Runtime. The runtime calls Amazon Bedrock for the model. Each pause and the finished memo are written to an S3 bucket in that same account. Nothing in the path is an Anthropic, OpenAI, or other third-party API.
+The picture shows one AgentCore Runtime session in NovaMark's AWS account, with Amazon Bedrock, S3, and CloudWatch in that account, and the market system, the research database, and the ESG provider beside it and not called.
 
-The market quote and the prior research in a demo memo are not NovaMark's systems. Both are the case-study mocks, running inside the agent. The filings are files in the deployment package.
+The agent, the saved state, and the model call run in NovaMark's AWS account, in the region the stack is deployed to (this build uses us-west-2). Inference is Amazon Bedrock in that account. A prompt and its answer stay there: nothing is sent to Anthropic, OpenAI, or any other third-party model API. State is an S3 bucket in the same account, KMS-encrypted, TLS-only, and private. Each pause and the finished memo are snapshots in that bucket.
 
-Two things break in their account and do not break on a laptop.
+A request is signed with AWS Signature Version 4. Only an IAM principal allowed to invoke the runtime can start a run or send a decision, and there is no separate password or API key. The memo is produced by one IAM role the runtime service assumes. The model has no credentials and no tools. The reviewer name and role are fields in the request and are not yet tied to the signing principal, and the runtime role can call any Bedrock model and delete objects in the bucket.
 
-The model id is a US inference profile. Bedrock may send that prompt to another US region. A local call has no residency check that fails, so the same run on a laptop does not reveal the hop.
-
-The research client starts a subprocess on the same machine and talks to it over standard input. NovaMark's research server is not on that machine, and this build has no AgentCore Gateway in front of it, so the call that works locally has nowhere to go in their account until a server is reachable.
+Demo market quotes and prior research are case-study mocks inside the agent, not NovaMark's live market system, research database, or ESG provider. Filings in the demo are files in the package.
