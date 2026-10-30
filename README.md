@@ -53,12 +53,18 @@ uv run pytest tests/test_deployed.py -v
 uv run python src/demo.py
 ```
 
-**What you see.** Two memos run through the deployed runtime, and the demo plays the reviewers:
+The demo stops at each review and asks you to approve or reject, first as the senior analyst and then as the compliance officer. It asks for your name and a comment. Pass `--auto` to approve both reviews with no one at the keyboard.
 
-- **AAPL, the tidy filing.** Metrics the filing does not state, such as `cloud_revenue` and `capex_outlook`, come back null with low confidence, and the risk is rated high. The run stops at `senior_review` with those flagged, the demo approves it, and the run continues to `compliance_review`.
+```sh
+uv run python src/demo.py --auto
+```
+
+**What you see.** Two memos, one after the other. Each state is a colored box. It fills in when the runtime answers, and the current review is highlighted. The run continues only after that review is decided.
+
+- **AAPL, the tidy filing.** Metrics the filing does not state, such as `cloud_revenue` and `capex_outlook`, come back null with low confidence, and the risk is rated high. The run stops at `senior_review` with those flagged, then continues to `compliance_review`.
 - **NVDA, the garbled filing.** The Gaming figure has no scale unit, so it is flagged too, alongside the same kind of null metrics. The run follows the same two stops.
 
-At each stop the demo prints the gate and who must decide, the flagged figures, the risk level, any data gaps, and every extracted figure with its confidence and the exact sentence it came from. After the compliance approval it prints `published`, the number of recorded decisions, and the memo. The full history of each run is saved in the state bucket as one snapshot per pause and one at the end.
+At a review, the box below the track lists who must decide, the flagged figures, the risk, any data gaps, and every extracted figure with its confidence and the sentence it came from. After the compliance approval the memo appears in a green box, with the number of recorded decisions. The full history of each run is saved in the state bucket as one snapshot per pause and one at the end.
 
 **Remove it** when you are done:
 

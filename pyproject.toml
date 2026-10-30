@@ -23,6 +23,7 @@ dev = [
     "aws-cdk-lib>=2.170",
     "constructs>=10",
     "httpie>=3.2",
+    "rich>=13",
 ]
 
 [tool.setuptools]
