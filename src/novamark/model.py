@@ -17,6 +17,7 @@ from .otel import span
 # --- settings -------------------------------------------------------------------------------
 
 MODEL_ID = "us.anthropic.claude-sonnet-4-6"  # must match the IAM profile in deploy.py
+EVAL_MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"  # evals and deployed tests
 REGION = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-west-2"
 
 # Resolved from the installed layout, so local and runtime agree: the code zip puts `data/` and
@@ -36,6 +37,11 @@ RISK_THRESHOLDS = {"confidence": 0.75}  # below this, a low risk is raised to me
 # --- the model ------------------------------------------------------------------------------
 
 SYSTEM = "You are a meticulous equity research analyst. Answer with the requested format only."
+
+
+def selected(payload: dict) -> str:
+    """Haiku when a caller asks for it. Memos stay on Sonnet."""
+    return EVAL_MODEL_ID if payload.get("model") == "haiku" else MODEL_ID
 
 
 def agent() -> Agent:

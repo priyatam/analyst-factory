@@ -5,6 +5,7 @@
     uv run python src/demo.py --high-risk     # high-risk filing, ask at both reviews
     uv run python src/demo.py --auto-approve  # approve without asking
     uv run python src/demo.py --audit         # snapshot, then the CloudWatch actions
+    uv run python src/demo.py --run-evals     # synthetic score, at most 100 runs
 
 The display is `cli.py`. The default ticker is the tidy filing (AAPL), which skips the
 senior analyst. `--high-risk` runs the garbled filing (NVDA), which stops for that
@@ -83,6 +84,10 @@ def arguments():
                         help="run the high-risk filing (NVDA) instead of the clean one")
     parser.add_argument("--audit", action="store_true",
                         help="print the last snapshot, then its CloudWatch actions")
+    parser.add_argument("--run-evals", action="store_true",
+                        help="score the synthetic filings and print the report")
+    parser.add_argument("--runs", type=int, default=None,
+                        help="how many synthetic runs, at most 100")
     return parser
 
 
@@ -90,8 +95,13 @@ def main(argv: list[str] | None = None) -> int:
     """One run. `--high-risk` selects NVDA. `--auto-approve` approves every review.
 
     `--audit` prints the last snapshot, then the actions CloudWatch recorded for it.
+    `--run-evals` scores the synthetic filings and does not call the runtime.
     """
     args = arguments().parse_args(argv)
+    if args.run_evals:
+        from evals import run as run_evals
+
+        return run_evals(args.runs)
     try:
         arn = require_arn()
     except SystemExit as exc:

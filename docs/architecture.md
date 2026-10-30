@@ -147,7 +147,7 @@ Two checks are not enforced yet: the decision's `gate` is never compared with th
 
 **Humans.** Every request is signed with SigV4, so only an IAM principal allowed to invoke the runtime can start a run or send a decision. The reviewer name and roles are plain fields in the request: `gates.decide` checks the role and the decision log stores the name, but neither is tied to the signing principal. Any permitted caller can therefore claim any role, and nothing stops a requester approving their own memo. The fix is to take both from the verified identity and record `requested_by` at intake.
 
-**The agent.** The memo is produced by one IAM role that the runtime service assumes for the session. Every Bedrock and S3 call is signed as that role, and each extracted value records the `model_id` and time that produced it. The model has no credentials and no tools, and `evidence_check` tests every value it returns. The state bucket is KMS-encrypted, TLS-only and private, and each snapshot is written once. The role is broader than it should be: any Bedrock model, delete on the bucket, and no source account condition on its trust policy. These are tracked in [code-reviews.md](code-reviews.md).
+**The agent.** The memo is produced by one IAM role that the runtime service assumes for the session. Every Bedrock and S3 call is signed as that role, and each extracted value records the `model_id` and time that produced it. The model has no credentials and no tools, and `evidence_check` tests every value it returns. A request with `"model": "haiku"` uses Claude Haiku 4.5 for that invoke, which is what the deployed tests send. A memo request without it stays on Sonnet. The state bucket is KMS-encrypted, TLS-only and private, and each snapshot is written once. The role is broader than it should be: any Bedrock model, delete on the bucket, and no source account condition on its trust policy. These are tracked in [code-reviews.md](code-reviews.md).
 
 ## Failure
 
@@ -162,6 +162,10 @@ Two checks are not enforced yet: the decision's `gate` is never compared with th
 A gap is passed to the review packet and stated in the memo. A stop returns an error and no packet, so a reviewer is never asked to approve a state that was not saved or a value that was invented.
 
 Two limits apply. The analyser still runs when the quote and the prior memos are both missing, so a memo can be written from filing text alone, with only `senior_review` standing in the way. And a failed store write is not retried, because repeating a write whose outcome is unknown is how duplicate decisions get created.
+
+## Evals
+
+The five success metrics are scored by a Strands experiment on labelled synthetic filings. The evaluator compares extracted figures with a hand-written key. There is no judge model. How to run it, and how to point Claude Code at the same cases, is in [evals.md](evals.md).
 
 ## What is not here
 

@@ -111,7 +111,12 @@ def add_stack(app: cdk.App, package_dir: str) -> cdk.Stack:
 
 def enable_transaction_search() -> None:
     import boto3
-    boto3.client("xray", region_name=os.getenv("CDK_DEFAULT_REGION", model.REGION)).update_trace_segment_destination(Destination="CloudWatchLogs")
+    client = boto3.client("xray", region_name=os.getenv("CDK_DEFAULT_REGION", model.REGION))
+    try:
+        client.update_trace_segment_destination(Destination="CloudWatchLogs")
+    except client.exceptions.InvalidRequestException as error:
+        if "already set" not in str(error):
+            raise
 
 
 if __name__ == "__main__":
