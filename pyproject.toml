@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "novamark"
+version = "0.1.0"
+description = "Governed research workforce: one request, an auditable memo, two human gates"
+requires-python = ">=3.12"
+dependencies = [
+    "strands-agents>=1.0",
+    "bedrock-agentcore>=1.0",
+    "mcp>=1.0",
+    "httpx>=0.28",
+    "fastapi>=0.110",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "uvicorn>=0.29",
+    "requests>=2.31",
+    "aws-cdk-lib>=2.170",
+    "constructs>=10",
+    "httpie>=3.2",
+]
+
+[tool.setuptools]
+packages = ["novamark", "novamark.process"]
+package-dir = {"" = "src"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+# smoke_test.py is a script against live mocks, not a unit test: only collect test_*.py
+python_files = ["test_*.py"]
+# The deployed tests bill model calls, so they run only when named: pytest tests/test_deployed.py
+addopts = "--ignore=tests/test_deployed.py"
+markers = ["allow_network: the test calls a deployment, so the no-network guard is off"]

@@ -1,0 +1,23 @@
+NVIDIA CORPORATION / FORM 10-K (EXCERPT, FY2026)
+[Abridged for this exercise. Not the full filing. Figures have been altered.]
+
+ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS (SELECTED)
+
+Revenue for fiscal 2026 was $130.6 billion, up 94% from the prior year,
+driven by Data Center revenue, which grew to $115.2 billion.
+
+Gross margin was 74.6%. Operating income was $81.4 billion.
+
+A SUMMARY TABLE WAS INCLUDED IN THE SOURCE AND PARTIALLY GARBLED ON EXPORT:
+
+  Segment              FY2026 Revenue
+  Data Center          $115.2 billion
+  Gaming               $11,900
+  Professional Viz     $1.9 billion
+  Automotive           $1.6 billion
+
+RISK FACTORS (SELECTED)
+- A substantial portion of revenue is concentrated among a limited number
+  of customers.
+- Export controls on advanced computing products may affect the business.
+- The Company depends on third-party foundries for manufacturing capacity.

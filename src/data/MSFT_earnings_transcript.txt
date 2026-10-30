@@ -1,0 +1,22 @@
+MICROSOFT CORPORATION / FY2026 Q2 EARNINGS CALL (EXCERPT)
+[Abridged transcript for this exercise. Figures have been altered.]
+
+OPERATOR: Good afternoon and welcome to the Microsoft fiscal year 2026
+second-quarter earnings conference call.
+
+CFO: Thank you. Revenue was $69.6 billion, up 12% year over year.
+Microsoft Cloud revenue was $40.9 billion, growing 21%. Azure and other
+cloud services revenue grew 31%.
+
+Operating income increased 17% to $31.7 billion. We returned $9.7 billion
+to shareholders through dividends and share repurchases.
+
+CFO: We expect capital expenditures to increase sequentially as we
+continue to invest in AI infrastructure. Margins will reflect this
+elevated investment in the near term.
+
+ANALYST (Q&A): Can you size the Copilot contribution to Productivity
+revenue?
+
+CFO: We're not breaking that out separately yet. What I'd say is that
+adoption is growing across our installed base, but it is early.

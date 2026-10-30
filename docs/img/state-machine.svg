@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="500" viewBox="0 0 1440 500" font-family="-apple-system, Segoe UI, Helvetica, Arial">
+<rect width="1440" height="500" fill="#ffffff"/>
+<defs><marker id="a8c4fff" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#8c4fff"/></marker></defs>
+<defs><marker id="a687078" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#687078"/></marker></defs>
+<defs><marker id="aed7100" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#ed7100"/></marker></defs>
+<defs><marker id="ad13212" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#d13212"/></marker></defs>
+<defs><marker id="a3f8624" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3f8624"/></marker></defs>
+<text x="34" y="38" font-size="20" font-weight="700" fill="#232f3e">State machine</text>
+<text x="34" y="60" font-size="12" fill="#687078">Boxes are the states a run is in. Arrows are the process, or the person's decision, that moves it on.</text>
+<rect x="30" y="210" width="128" height="38" rx="19.0" fill="#ffffff" stroke="#8c4fff" stroke-width="2"/>
+<text x="94.0" y="233.0" text-anchor="middle" font-size="11.5" font-weight="600" fill="#232f3e">data_collector</text>
+<rect x="270" y="210" width="150" height="38" rx="19.0" fill="#ffffff" stroke="#8c4fff" stroke-width="2"/>
+<text x="345.0" y="233.0" text-anchor="middle" font-size="11.5" font-weight="600" fill="#232f3e">document_analyser</text>
+<rect x="560" y="204" width="140" height="46" rx="23.0" fill="#fff7e8" stroke="#ed7100" stroke-width="2"/>
+<text x="630.0" y="227.0" text-anchor="middle" font-size="11.5" font-weight="600" fill="#232f3e">senior_review</text>
+<text x="630.0" y="239.0" text-anchor="middle" font-size="9" fill="#687078">senior analyst</text>
+<rect x="840" y="210" width="100" height="38" rx="19.0" fill="#ffffff" stroke="#8c4fff" stroke-width="2"/>
+<text x="890.0" y="233.0" text-anchor="middle" font-size="11.5" font-weight="600" fill="#232f3e">synthesis</text>
+<rect x="1060" y="204" width="152" height="46" rx="23.0" fill="#eef8ea" stroke="#3f8624" stroke-width="2"/>
+<text x="1136.0" y="227.0" text-anchor="middle" font-size="11.5" font-weight="600" fill="#232f3e">compliance_review</text>
+<text x="1136.0" y="239.0" text-anchor="middle" font-size="9" fill="#687078">compliance officer</text>
+<rect x="1320" y="210" width="104" height="38" rx="19.0" fill="#ffffff" stroke="#3f8624" stroke-width="2"/>
+<text x="1372.0" y="233.0" text-anchor="middle" font-size="11.5" font-weight="600" fill="#232f3e">published</text>
+<rect x="760" y="400" width="120" height="38" rx="19.0" fill="#ffffff" stroke="#d13212" stroke-width="2"/>
+<text x="820.0" y="423.0" text-anchor="middle" font-size="11.5" font-weight="600" fill="#232f3e">escalated</text>
+<path d="M158,229 L268,229" fill="none" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
+<text x="213" y="206" text-anchor="middle" font-size="9.5" fill="#687078">collect +</text>
+<text x="213" y="218" text-anchor="middle" font-size="9.5" fill="#687078">prior_research</text>
+<path d="M420,229 L558,229" fill="none" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
+<text x="489" y="206" text-anchor="middle" font-size="9.5" fill="#687078">analyse:</text>
+<text x="489" y="218" text-anchor="middle" font-size="9.5" fill="#687078">flagged</text>
+<path d="M700,229 L838,229" fill="none" stroke="#ed7100" stroke-width="1.8" marker-end="url(#aed7100)"/>
+<text x="769" y="206" text-anchor="middle" font-size="9.5" fill="#ed7100">approve or</text>
+<text x="769" y="218" text-anchor="middle" font-size="9.5" fill="#ed7100">amend</text>
+<path d="M940,229 L1058,229" fill="none" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
+<text x="999" y="222" text-anchor="middle" font-size="9.5" fill="#687078">synthesize</text>
+<path d="M1212,229 L1318,229" fill="none" stroke="#3f8624" stroke-width="1.8" marker-end="url(#a3f8624)"/>
+<text x="1265" y="206" text-anchor="middle" font-size="9.5" fill="#3f8624">approve or</text>
+<text x="1265" y="218" text-anchor="middle" font-size="9.5" fill="#3f8624">amend</text>
+<path d="M345,208 L345,125 L870,125 L870,208" fill="none" stroke="#687078" stroke-width="1.8" marker-end="url(#a687078)"/>
+<text x="607" y="118" text-anchor="middle" font-size="9.5" fill="#687078">analyse: clean, no review</text>
+<path d="M590,250 L590,320 L345,320 L345,250" fill="none" stroke="#d13212" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ad13212)"/>
+<text x="467" y="334" text-anchor="middle" font-size="9.5" fill="#d13212">reject: analyse again</text>
+<path d="M1136,206 L1136,170 L910,170 L910,208" fill="none" stroke="#d13212" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ad13212)"/>
+<text x="1023" y="164" text-anchor="middle" font-size="9.5" fill="#d13212">reject: synthesize again</text>
+<path d="M670,250 L670,419 L758,419" fill="none" stroke="#d13212" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ad13212)"/>
+<text x="678" y="330" text-anchor="start" font-size="9.5" fill="#d13212">third reject</text>
+<path d="M1100,250 L1100,419 L882,419" fill="none" stroke="#d13212" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ad13212)"/>
+<text x="1108" y="330" text-anchor="start" font-size="9.5" fill="#d13212">third reject</text>
+<rect x="34" y="346" width="14" height="14" rx="4" fill="#fff7e8" stroke="#ed7100" stroke-width="2"/>
+<text x="58" y="358" text-anchor="start" font-size="10.5" fill="#687078">waiting for a person</text>
+<line x1="34" y1="382" x2="62" y2="382" stroke="#d13212" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ad13212)"/>
+<text x="72" y="386" text-anchor="start" font-size="10.5" fill="#687078">rejection, back to the producer</text>
+<text x="34" y="418" text-anchor="start" font-size="10.5" fill="#687078">published and escalated are terminal.</text>
+<text x="34" y="440" text-anchor="start" font-size="10.5" fill="#687078">Every arrow hands on the same MemoState with its status changed.</text>
+</svg>

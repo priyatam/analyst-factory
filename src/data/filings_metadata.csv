@@ -1,0 +1,4 @@
+doc_id,company,ticker,doc_type,fiscal_period,filing_date,source,filename
+DOC-AAPL-10K,Apple Inc.,AAPL,10-K excerpt,FY2025,2025-11-01,SEC EDGAR (excerpt),AAPL_10K_excerpt.txt
+DOC-NVDA-10K,NVIDIA Corp.,NVDA,10-K excerpt,FY2026,2026-02-26,SEC EDGAR (excerpt),NVDA_10K_excerpt.txt
+DOC-MSFT-CALL,Microsoft Corp.,MSFT,Earnings call transcript,FY2026 Q2,2026-01-28,Company IR (excerpt),MSFT_earnings_transcript.txt
