@@ -536,6 +536,32 @@ def process_flow() -> None:
     print("wrote img/process-flow.svg and img/process-flow.png")
 
 
+# --- 6. evals -------------------------------------------------------------------------------
+
+def evals() -> None:
+    """One case, left to right: the task runs the agent, Figures scores it, detectors stay off."""
+    c = Canvas(1240, 400, markers=(INK, ORANGE, GREEN, GRAY))
+    heading(c, "How one eval case fits together",
+            "The experiment repeats this for every synthetic filing, then aggregates the scores.")
+
+    boundary(c, 24, 100, 1192, 200, "EXPERIMENT · REPEATS FOR EVERY CASE")
+    card(c, 44, 150, 180, 110, INK, "Case", ["filing", "expected figures"])
+    card(c, 300, 150, 210, 110, ORANGE, "Task", ["agent_task", "runs the orchestrator"])
+    card(c, 680, 150, 210, 110, GREEN, "Figures", ["scores the output", "and the trajectory"])
+    card(c, 1020, 150, 168, 110, GRAY, "Detectors", ["off"], dash="6 4", muted=True)
+
+    hline(c, 224, 300, 205, "input", color=INK)
+    hline(c, 510, 680, 186, "output", color=ORANGE)
+    hline(c, 510, 680, 230, "trajectory", color=ORANGE)
+    route(c, [(890, 205), (1020, 205)], "on failure", lx=955, ly=193, color=GRAY, dash="5 4")
+
+    c.add(f'<text x="620" y="350" text-anchor="middle" font-size="13" font-weight="600" '
+          f'fill="{INK}">Report</text>')
+    c.add(f'<text x="620" y="370" text-anchor="middle" font-size="12" fill="{GRAY}">'
+          f'one row per case, then the baseline and the range for the five metrics</text>')
+    c.save("evals")
+
+
 # --- entrypoint -----------------------------------------------------------------------------
 
 DIAGRAMS = {
@@ -544,6 +570,7 @@ DIAGRAMS = {
     "process-flow": process_flow,
     "identity": identity,
     "execution": execution,
+    "evals": evals,
 }
 
 

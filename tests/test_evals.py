@@ -49,7 +49,7 @@ def test_the_report_scores_agreement_and_averages_the_auditor_estimate():
     assert "missed" in text
     assert "average auditor review 10.0 min" in text
     assert "cap 100" in text
-    for metric in ("Memo time", "Gathering", "same day", "above 90%"):
+    for metric in ("Memo time", "Gathering", "same day", "above 90%", "baseline"):
         assert metric in text
     assert "under 45 min" in text
     assert "0–15%" in text

@@ -163,6 +163,30 @@ A gap is passed to the review packet and stated in the memo. A stop returns an e
 
 Two limits apply. The analyser still runs when the quote and the prior memos are both missing, so a memo can be written from filing text alone, with only `senior_review` standing in the way. And a failed store write is not retried, because repeating a write whose outcome is unknown is how duplicate decisions get created.
 
+## Cost
+
+The forecast is model inference. List price for Claude Sonnet 4.6 is $3 per million input tokens and $15 per million output tokens.
+
+A memo that is approved without a rejection makes three calls: extract the figures, assess risk, and write the memo. The two reviews do not call the model. One published memo used 1,993 input tokens and 1,435 output tokens.
+
+```text
+1,993 / 1,000,000 × $3  = $0.006
+1,435 / 1,000,000 × $15 = $0.022
+                        = $0.028 per memo
+```
+
+Output tokens are about four-fifths of that. At this token count, 1,000 tickers are $28 and 100,000 tickers are $2,800.
+
+That number depends on all of the following.
+
+- The filing is an excerpt of the size already run, not a full 10-K. Input tokens move with the length of the filing and the prior notes.
+- The memo stays about one page. A longer memo raises the output line, which is most of the bill.
+- Each ticker is approved once. A senior rejection repeats extract and risk. A compliance rejection repeats the memo. The cap is three revisions.
+- The rate stays $3 and $15. The runtime calls the US inference profile. A different rate on that profile scales the table by the same factor.
+- No prompt caching and no batch inference. Batch list price is half, and this path does not use it.
+
+Runtime, the state bucket, and logs are separate from this forecast.
+
 ## Evals
 
 The five success metrics are scored by a Strands experiment on labelled synthetic filings. The evaluator compares extracted figures with a hand-written key. There is no judge model. How to run it, and how to point Claude Code at the same cases, is in [evals.md](evals.md).

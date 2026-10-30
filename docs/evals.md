@@ -2,6 +2,12 @@
 
 The five success metrics in [requirements.md](requirements.md) are scored on labelled synthetic filings. The built-in run uses the Strands Evals SDK. A second option is Claude Code, pointed at the same cases and the same evaluator.
 
+## How it fits together
+
+Each case goes to the task, which returns the output and the trajectory; `Figures` scores them, detectors stay off, and the experiment repeats that for every filing into one report.
+
+![How one eval case fits together](img/evals.svg)
+
 ## Built-in Strands evals
 
 ```sh
@@ -26,9 +32,9 @@ strands-evals run <file> --task evals:agent_task --custom-evaluator evals:Figure
 
 The report has two tables. The first is one row per run: the score, the agent seconds, the auditor estimate, and which figures missed. Under it are the run count, the consistency, the average agent time, and the average auditor estimate.
 
-The second table is the five success metrics. Each row is where the firm is today, the target, a guesstimate from this run, and a projected range.
+The second table is the five success metrics. Each row is where the firm is today, the target, the baseline from this run, and the range around that baseline.
 
-| Metric | Guesstimate | Projected range |
+| Metric | Baseline | Range |
 | --- | --- | --- |
 | Memo time | Mean agent time plus the mean auditor estimate | Fastest agent time plus 5 minutes, through slowest agent time plus 15 minutes |
 | Gathering | About 0% of the analyst's time, because the pipe fetches the filing | 0–15%, allowing a reviewer who still opens the source |
@@ -36,7 +42,17 @@ The second table is the five success metrics. Each row is where the firm is toda
 | Audit coverage | Complete for every run that returns a packet, because the pause writes a snapshot | From these runs to every memo the pipe publishes |
 | Consistency | The mean figure score on this set | The lowest case score through the highest |
 
-A guesstimate is this synthetic set. A projected range is the band to quote from it. Neither one is a timing study of the fifteen analysts, and the consistency percentage is not the 90% target until a labelled sample of real memos is scored the same way.
+The baseline is this synthetic run. The range is the band it supports. Production evals keep this scorer and replace the stand-ins with the firm's filings and the recorded review times. That is how each number tightens toward the target.
+
+## From the baseline to production
+
+Each strategy below uses the same `Figures` check. The production run names the miss or the slow step, and the next change aims at that.
+
+1. **Memo time.** Clock the deployed draft and the wait from the pause to the approval. Cut the slow model calls that clock names. The target is under 45 minutes once the officer's time is on the same clock.
+2. **Gathering.** Connect the firm's market feed, filings, and research notes to the pipe that already fetches them here. Score how often a figure arrives with the analyst still opening a system. The target is under 20% of analyst time.
+3. **Compliance cycle.** Read the approval time stored on the snapshot. The cycle is the wait from the ready draft to that approval. The target is the same day, which the 5–15 minute estimate already sits inside.
+4. **Audit coverage.** Score every published snapshot for a citation, a confidence, and a named reviewer. The target is complete when every memo in the state bucket passes.
+5. **Consistency.** Grow the labelled set from these three filings to a sample of real memos. Keep the key written by a person. Fail the run when the mean is under 90%, fix the figures the report names, and run again. Score the memo model, Sonnet, on that set so the model that publishes is the one being optimized. Haiku stays the fast loop for this synthetic set.
 
 ## Claude Code
 
@@ -54,13 +70,13 @@ Generate an evaluation plan for the NovaMark agent in this repo. The agent is sr
 
 Read docs/requirements.md (Success Metrics), docs/evals.md, src/evals.py, and src/data/synthetic/cases.json.
 
-Score only these five metrics. Keep today's number, the target, a guesstimate from this run, and a projected range.
+Score only these five metrics. Keep today's number, the target, the baseline from this run, and the range around it.
 
-1. Memo production time. Today 4–6 hours. Target under 45 minutes. Guesstimate is the mean agent seconds divided by 60, plus the mean auditor minutes. Range is the fastest agent time plus 5 minutes through the slowest agent time plus 15 minutes.
-2. Analyst time gathering data. Today about 65%. Target under 20%. Guesstimate is about 0%, because the pipe fetches the filing. Range is 0–15%.
-3. Compliance review cycle. Today 2–3 days. Target the same day. Guesstimate is the mean of the 5–15 minute auditor estimates. Range is 5–15 minutes.
-4. Audit coverage of AI-assisted output. Today none. Target complete. Guesstimate is complete for every run that returns a packet. Range is these runs through every published memo.
-5. Research consistency. Today 58%. Target above 90%. Guesstimate is the mean Figures score. Range is the lowest case score through the highest.
+1. Memo production time. Today 4–6 hours. Target under 45 minutes. Baseline is the mean agent seconds divided by 60, plus the mean auditor minutes. Range is the fastest agent time plus 5 minutes through the slowest agent time plus 15 minutes.
+2. Analyst time gathering data. Today about 65%. Target under 20%. Baseline is about 0%, because the pipe fetches the filing. Range is 0–15%.
+3. Compliance review cycle. Today 2–3 days. Target the same day. Baseline is the mean of the 5–15 minute auditor estimates. Range is 5–15 minutes.
+4. Audit coverage of AI-assisted output. Today none. Target complete. Baseline is complete for every run that returns a packet. Range is these runs through every published memo.
+5. Research consistency. Today 58%. Target above 90%. Baseline is the mean Figures score. Range is the lowest case score through the highest.
 
 Consistency is labelled-figure agreement. The evaluator is Figures in src/evals.py. A case scores 1 only when every expected figure matches. There is no judge model, no rubric, and no OutputEvaluator.
 
@@ -75,7 +91,7 @@ strands-evals run <experiment> --task evals:agent_task --custom-evaluator evals:
 
 Exit 1 means the mean score is under 90%. The report still prints.
 
-The guesstimates and ranges are projections from this synthetic set. They are not a timing study of the fifteen analysts, and the consistency percentage is not the 90% target until a labelled sample of real memos is scored the same way. Auditor minutes are the 5–15 estimate on each case, not a measured wait.
+The baseline and the range come from this synthetic set. Production evals keep this scorer, swap in a labelled sample of real memos, and read the recorded review time. That is how each number moves toward its target. Auditor minutes on these cases are the 5–15 estimate.
 
 Do not deploy. Do not call the AgentCore runtime. Write the plan, then the report, from that run.
 ```

@@ -49,6 +49,7 @@ cdk.context.json
 
 # Generated eval logs and reports. The history slice in dataset/history stays tracked.
 .runtime/
+eval/
 
 # Local slide deck
 docs/presentation.html

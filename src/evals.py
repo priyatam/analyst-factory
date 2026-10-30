@@ -149,7 +149,7 @@ def _strands(args: list[str], timings: Path) -> int:
 
 
 def projections(report, rows: list[dict], seconds: list[float]) -> list[tuple[str, str, str, str, str]]:
-    """Today, the target, a guesstimate from this run, and a projected range. One row per success metric."""
+    """Today, the target, the baseline from this run, and the range around it. One row per success metric."""
     agent = sum(seconds) / len(seconds)
     auditor = sum(row["auditor_minutes"] for row in rows) / len(rows)
     memo = agent / 60 + auditor
@@ -190,7 +190,7 @@ def show(report, rows: list[dict], seconds: list[float], console: Console | None
     console.print(f"average agent time {sum(seconds) / len(seconds):.1f}s")
     console.print(f"average auditor review {sum(minutes) / len(minutes):.1f} min (estimate)")
     metrics = Table(show_header=True, header_style="bold", title="Success metrics")
-    for heading in ("metric", "today", "target", "guesstimate", "projected range"):
+    for heading in ("metric", "today", "target", "baseline", "range"):
         metrics.add_column(heading)
     for row in projections(report, rows, seconds):
         metrics.add_row(*row)

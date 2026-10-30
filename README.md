@@ -1,4 +1,4 @@
-# NovaMark: Analyst Factory 
+# NovaMark: Analyst Factory
 
 ## Overview
 
@@ -14,7 +14,7 @@ This project is an agentic proof of concept of that workflow: a state machine bu
 - [Decisions](docs/decisions.md): the choices made and what each rejected
 - [Code reviews](docs/code-reviews.md): review findings and planned refactors
 - [Deployment](docs/deployment.md): where the run executes, and what breaks in NovaMark's account
-- [CFO brief](docs/cfo-brief.md): the five figures, and what this prototype did not measure
+- [CFO brief](docs/cfo-brief.md): the five figures, and the path from this baseline to production
 
 ![Where each part runs](docs/img/deployment.svg)
 
@@ -63,35 +63,9 @@ uv run python src/demo.py --high-risk
 uv run python src/demo.py --auto-approve
 uv run python src/demo.py --high-risk --auto-approve
 uv run python src/demo.py --audit
-uv run python src/demo.py --run-evals
-uv run python src/demo.py --run-evals --runs 100
 ```
 
 `--audit` prints the last run's complete memo state from the state bucket, then the actions CloudWatch Logs recorded for that run. The runtime ARN is printed once above the table, with the service alias, and the run's token total under it. Each row names that identity, then the process, and under that the model calls, market quote, and MCP reads. A model row shows its own input and output tokens. It does not start a memo.
-
-`--run-evals` does not use the runtime. It runs the local agent on the labelled filings in `src/data/synthetic/` and prints a report. The model for those calls is Claude Haiku 4.5. Memos stay on Sonnet. One run per case unless `--runs` is set. The cap is 100. How the score is built, and how to run the same cases from Claude Code, is in [Evals](docs/evals.md).
-
-**What the eval report shows.** A line that these are synthetic runs, then one row per run:
-
-| Column | Meaning |
-| --- | --- |
-| case | The filing, and which repeat it is |
-| score | Share of labelled figures that came back with the same value. 1.00 is every figure |
-| agent s | Seconds for that run, up to the first review |
-| auditor min | The 5–15 minute estimate stored on the case |
-| notes | `figures match`, or the names of the figures that missed |
-
-Under that table: the run count against the cap of 100, consistency (the mean score), average agent time, and average auditor review.
-
-Then a second table, **Success metrics**, one row for each number in the requirements. `today` and `target` are the firm's baseline. `guesstimate` is this run. `projected range` is the band to quote from it.
-
-| Metric | Guesstimate | Projected range |
-| --- | --- | --- |
-| 1 Memo time | Agent time plus the auditor estimate, in minutes | Fastest run plus 5 minutes, through slowest run plus 15 minutes. The target is under 45 minutes |
-| 2 Gathering | About 0%, because the pipe fetches the filing | 0–15% |
-| 3 Compliance cycle | The average of the auditor estimates | 5–15 minutes, the same day |
-| 4 Audit coverage | Complete for every run that returns a packet | These runs, through every memo the pipe publishes |
-| 5 Consistency | The mean figure score | The lowest case through the highest. The target is above 90% |
 
 **What you see.** One memo. Each state is a colored box. It fills in when the runtime answers, and the current review is highlighted. The run continues only after that review is decided.
 
@@ -135,6 +109,49 @@ uv run http POST localhost:8080/invocations \
   type=decision run_id="<id>" roles:='["senior_analyst"]' \
   decision:='{"gate":"senior_review","action":"approve","reviewer":"you","comment":"ok"}'
 ```
+
+## Evals
+
+Evals run on your machine. They do not use the deployed runtime, and they do not need `NOVAMARK_RUNTIME_ARN`. The model for these calls is Claude Haiku 4.5. Memos stay on Sonnet.
+
+```sh
+uv run python src/demo.py --run-evals
+uv run python src/demo.py --run-evals --runs 100
+```
+
+One run per labelled filing in `src/data/synthetic/` unless `--runs` is set. The cap is 100. The same cases can be driven from Claude Code. The score, the production path, and that prompt are in [Evals](docs/evals.md).
+
+A clean pass of the three cases prints this. The agent seconds are the clock on that run.
+
+```text
+Synthetic eval. Consistency is labelled-figure agreement. Auditor minutes are a 5–15 estimate, not a measured wait. The
+ranges below are a projection from this run.
+┏━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ case      ┃ score ┃ agent s ┃ auditor min ┃ notes         ┃
+┡━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ helix #1  │  1.00 │     4.2 │           5 │ figures match │
+│ nimbus #2 │  1.00 │     6.1 │          10 │ figures match │
+│ orbit #3  │  1.00 │     5.0 │          15 │ figures match │
+└───────────┴───────┴─────────┴─────────────┴───────────────┘
+runs 3 (cap 100)
+consistency 100%
+average agent time 5.1s
+average auditor review 10.0 min (estimate)
+Success metrics
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━
+┃ metric             ┃ today     ┃ target       ┃ baseline                ┃ range                          
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━
+│ 1 Memo time        │ 4–6 hours │ under 45 min │ 10 min                  │ 5–15 min                           │
+│ 2 Gathering        │ about 65% │ under 20%    │ about 0%                │ 0–15%                              │
+│ 3 Compliance cycle │ 2–3 days  │ same day     │ 10 min                  │ 5–15 min                           │
+│ 4 Audit coverage   │ none      │ complete     │ complete for these runs │ these runs to every published memo │
+│ 5 Consistency      │ 58%       │ above 90%    │ 100%                    │ 100%–100%                          │
+└────────────────────┴───────────┴──────────────┴─────────────────────────┴──────────────
+```
+
+`score` is the share of labelled figures that matched. `1.00` is every figure. `agent s` is seconds to the first review. `auditor min` is the 5–15 estimate on the case. `notes` names any figure that missed.
+
+`consistency` is the mean score. In **Success metrics**, `today` and `target` are the firm's, `baseline` is this run, and `range` is the band around it.
 
 ## Case data and mocks
 
