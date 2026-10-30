@@ -3,7 +3,8 @@
 The runtime launches `python novamark/agent.py`, so `start` runs in that process.
 It does not build a second tracer provider: Strands already calls
 `trace.get_tracer_provider()`, and replacing it would drop the distro's exporter.
-Local runs and tests leave `STATE_BUCKET` unset, so `start` returns immediately.
+Instrumentation is FastAPI, Lambda, botocore, and logging. Local runs and tests
+leave `STATE_BUCKET` unset, so `start` returns immediately.
 
 `span` opens one span when the caller enters it. The tracer is taken then, so a
 test provider installed earlier is used. Attributes are only str, bool, int, or
@@ -13,19 +14,9 @@ import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-# Libraries this process never imports. Logging stays enabled so agent logs export.
-_SKIP = ",".join((
-    "django", "flask", "fastapi", "starlette",
-    "grpc_aio_client", "grpc_aio_server", "grpc_client", "grpc_server",
-    "kafka", "aiokafka", "confluent_kafka",
-    "redis", "pymemcache",
-    "sqlalchemy", "psycopg2", "pymysql", "sqlite3", "aiopg", "asyncpg",
-    "mysql", "mysqlclient", "tortoiseorm",
-    "httpx", "httpx2", "requests", "urllib", "urllib3", "aiohttp-client", "aio-pika",
-    "botocore", "boto3", "aiobotocore",
-    "celery", "pika", "pymongo", "cassandra", "tornado", "pyramid", "falcon",
-    "jinja2", "system_metrics", "threading", "remoulade", "aws-lambda",
-))
+# The install only carries FastAPI, Lambda, botocore, and logging. These distro
+# instrumentors ship inside aws-opentelemetry-distro and are not used here.
+_SKIP = "aws_crewai,aws_langchain,aws_llama-index,aws_openai_agents"
 
 _started = False
 _TYPES = (str, bool, int, float)

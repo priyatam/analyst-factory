@@ -10,6 +10,7 @@ This project is an agentic proof of concept of that workflow: a state machine bu
 
 - [Requirements](docs/requirements.md): what the system must do, and the process flow
 - [Architecture](docs/architecture.md): the state machine, the runtime, security, and what is not built
+- [Evals](docs/evals.md): the built-in Strands run, and the same cases from Claude Code
 - [Decisions](docs/decisions.md): the choices made and what each rejected
 - [Code reviews](docs/code-reviews.md): review findings and planned refactors
 - [Deployment](docs/deployment.md): where the run executes, and what breaks in NovaMark's account
@@ -43,7 +44,7 @@ npx aws-cdk deploy
 export NOVAMARK_RUNTIME_ARN=arn:aws:bedrock-agentcore:<region>:<account>:runtime/<name>-<id>
 ```
 
-**4. Run the deployed tests.** The three tests in `tests/test_deployed.py` call the runtime with that ARN. They make real model calls, billed to your account, so `uv run pytest` never runs them. They run only when you name the file, as below, with the ARN set.
+**4. Run the deployed tests.** The three tests in `tests/test_deployed.py` call the runtime with that ARN and ask it to use Haiku. They make real model calls, billed to your account, so `uv run pytest` never runs them. They run only when you name the file, as below, with the ARN set. The runtime has to be a build that reads `model: haiku`.
 
 ```sh
 uv run pytest tests/test_deployed.py -v
@@ -62,9 +63,35 @@ uv run python src/demo.py --high-risk
 uv run python src/demo.py --auto-approve
 uv run python src/demo.py --high-risk --auto-approve
 uv run python src/demo.py --audit
+uv run python src/demo.py --run-evals
+uv run python src/demo.py --run-evals --runs 100
 ```
 
 `--audit` prints the last run's complete memo state from the state bucket, then the actions CloudWatch Logs recorded for that run. The runtime ARN is printed once above the table, with the service alias, and the run's token total under it. Each row names that identity, then the process, and under that the model calls, market quote, and MCP reads. A model row shows its own input and output tokens. It does not start a memo.
+
+`--run-evals` does not use the runtime. It runs the local agent on the labelled filings in `src/data/synthetic/` and prints a report. The model for those calls is Claude Haiku 4.5. Memos stay on Sonnet. One run per case unless `--runs` is set. The cap is 100. How the score is built, and how to run the same cases from Claude Code, is in [Evals](docs/evals.md).
+
+**What the eval report shows.** A line that these are synthetic runs, then one row per run:
+
+| Column | Meaning |
+| --- | --- |
+| case | The filing, and which repeat it is |
+| score | Share of labelled figures that came back with the same value. 1.00 is every figure |
+| agent s | Seconds for that run, up to the first review |
+| auditor min | The 5–15 minute estimate stored on the case |
+| notes | `figures match`, or the names of the figures that missed |
+
+Under that table: the run count against the cap of 100, consistency (the mean score), average agent time, and average auditor review.
+
+Then a second table, **Success metrics**, one row for each number in the requirements. `today` and `target` are the firm's baseline. `guesstimate` is this run. `projected range` is the band to quote from it.
+
+| Metric | Guesstimate | Projected range |
+| --- | --- | --- |
+| 1 Memo time | Agent time plus the auditor estimate, in minutes | Fastest run plus 5 minutes, through slowest run plus 15 minutes. The target is under 45 minutes |
+| 2 Gathering | About 0%, because the pipe fetches the filing | 0–15% |
+| 3 Compliance cycle | The average of the auditor estimates | 5–15 minutes, the same day |
+| 4 Audit coverage | Complete for every run that returns a packet | These runs, through every memo the pipe publishes |
+| 5 Consistency | The mean figure score | The lowest case through the highest. The target is above 90% |
 
 **What you see.** One memo. Each state is a colored box. It fills in when the runtime answers, and the current review is highlighted. The run continues only after that review is decided.
 

@@ -16,6 +16,11 @@ def test_model_edge_uses_the_configured_model_and_no_tools():
     assert built.system_prompt
 
 
+def test_a_haiku_request_selects_the_eval_model():
+    assert model.selected({"model": "haiku"}) == model.EVAL_MODEL_ID
+    assert model.selected({}) == model.MODEL_ID
+
+
 def test_model_id_is_declared_once():
     """AGENTS.md: the id matches the IAM profile. One literal, in model."""
     source = open(model.__file__).read()

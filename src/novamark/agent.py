@@ -31,17 +31,20 @@ app = BedrockAgentCoreApp()
 
 @app.entrypoint
 def invoke(payload: dict) -> dict:
-    from novamark import orchestrator, state
+    from novamark import model, orchestrator, state
 
     handlers = {"new_request": orchestrator.start, "decision": orchestrator.decide_sync,
                 "audit": lambda _payload: state.latest()}
+    previous = model.MODEL_ID
+    model.MODEL_ID = model.selected(payload)
     try:
-        log.info("invoke type=%s run_id=%s", payload.get("type"), payload.get("run_id"))
+        log.info("invoke type=%s run_id=%s model=%s", payload.get("type"), payload.get("run_id"), model.MODEL_ID)
         return handlers[payload["type"]](payload)
     except Exception:
         log.error("invoke failed for %s\n%s", payload.get("type"), traceback.format_exc())
         raise
     finally:
+        model.MODEL_ID = previous
         try:
             otel.flush()
         except Exception:

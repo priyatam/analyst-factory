@@ -7,7 +7,8 @@ These need a real deployment and AWS credentials, so they skip unless
     uv run pytest tests/test_deployed.py -v
 
 The request is SigV4-signed with the caller's credentials, which is what the runtime expects.
-A run costs one model call, so the module is opt-in rather than part of the default run.
+Each call sets `model` to `haiku`. A run costs model calls, so the module is opt-in rather than
+part of the default run. The runtime must be a build that reads that field.
 """
 import json
 import os
@@ -38,7 +39,7 @@ def call(payload: dict) -> dict:
         f"NOVAMARK_RUNTIME_ARN must be the runtime ARN (the RuntimeArn stack output), not {ARN}")
     encoded = urllib.parse.quote(ARN, safe="")
     url = f"https://bedrock-agentcore.{REGION}.amazonaws.com/runtimes/{encoded}/invocations"
-    body = json.dumps(payload)
+    body = json.dumps({**payload, "model": "haiku"})
     signed = AWSRequest(method="POST", url=url, data=body,
                         headers={"Content-Type": "application/json"})
     SigV4Auth(boto3.Session().get_credentials(), "bedrock-agentcore", REGION).add_auth(signed)

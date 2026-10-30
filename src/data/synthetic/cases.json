@@ -1,0 +1,23 @@
+[
+  {
+    "name": "helix",
+    "ticker": "HLX",
+    "auditor_minutes": 5,
+    "filing": "Helix Labs revenue was $4.2 billion. Gross margin was 61 percent. Operating income was $1.1 billion.",
+    "expected": {"revenue": 4.2, "gross_margin": 61, "operating_income": 1.1}
+  },
+  {
+    "name": "nimbus",
+    "ticker": "NMB",
+    "auditor_minutes": 10,
+    "filing": "Nimbus Cloud revenue was $8.0 billion. Operating income was $2.4 billion.",
+    "expected": {"revenue": 8.0, "operating_income": 2.4}
+  },
+  {
+    "name": "orbit",
+    "ticker": "ORB",
+    "auditor_minutes": 15,
+    "filing": "Orbit Devices net sales were $3.5 billion. Gross margin was 44 percent.",
+    "expected": {"net_sales": 3.5, "gross_margin": 44}
+  }
+]
