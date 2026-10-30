@@ -154,6 +154,39 @@ def snapshots(run_id: str) -> list[str]:
     return sorted(p.name for p in (Path(STATE_DIR) / run_id).glob("*.json"))
 
 
+def latest() -> MemoState:
+    """The newest snapshot of the newest run.
+
+    Locally that is the file with the newest mtime under STATE_DIR. On S3 it is
+    the object under runs/ with the newest LastModified, and load reads that run.
+    """
+    if STATE_BUCKET:
+        import boto3
+
+        s3 = boto3.client("s3", region_name=REGION)
+        newest_at = None
+        run_id = None
+        pages = s3.get_paginator("list_objects_v2").paginate(Bucket=STATE_BUCKET, Prefix="runs/")
+        for page in pages:
+            for obj in page.get("Contents", []):
+                parts = obj["Key"].split("/")
+                if len(parts) < 3 or not parts[1]:
+                    continue
+                modified = obj["LastModified"]
+                if newest_at is None or modified > newest_at:
+                    newest_at = modified
+                    run_id = parts[1]
+        if run_id is None:
+            raise FileNotFoundError("no snapshots")
+        return load(run_id)
+
+    files = list(Path(STATE_DIR).glob("*/*.json"))
+    if not files:
+        raise FileNotFoundError("no snapshots")
+    newest = max(files, key=lambda path: path.stat().st_mtime)
+    return load(newest.parent.name)
+
+
 def load(run_id: str) -> MemoState:
     """The latest snapshot, which is the run's current state."""
     if STATE_BUCKET:

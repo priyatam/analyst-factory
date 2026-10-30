@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="240" viewBox="0 0 1280 240" font-family="-apple-system, Segoe UI, Helvetica, Arial">
+  <rect width="1280" height="240" fill="#ffffff"/>
+  <defs>
+    <marker id="arr-gray" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#687078"/>
+    </marker>
+    <marker id="arr-navy" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#1a3d6e"/>
+    </marker>
+  </defs>
+
+  <text x="36" y="28" font-size="13" font-weight="700" letter-spacing="0.8" fill="#687078">TODAY</text>
+
+  <rect x="36" y="48" width="168" height="48" rx="8" fill="#fff" stroke="#687078" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="120" y="77" text-anchor="middle" font-size="14" font-weight="600" fill="#232f3e">Research DB</text>
+
+  <rect x="36" y="108" width="168" height="48" rx="8" fill="#fff" stroke="#687078" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="120" y="137" text-anchor="middle" font-size="14" font-weight="600" fill="#232f3e">Public filings</text>
+
+  <rect x="36" y="168" width="168" height="48" rx="8" fill="#fff" stroke="#687078" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="120" y="197" text-anchor="middle" font-size="14" font-weight="600" fill="#232f3e">ESG provider</text>
+
+  <line x1="204" y1="72" x2="268" y2="118" stroke="#687078" stroke-width="1.6" marker-end="url(#arr-gray)"/>
+  <line x1="204" y1="132" x2="268" y2="128" stroke="#687078" stroke-width="1.6" marker-end="url(#arr-gray)"/>
+  <line x1="204" y1="192" x2="268" y2="140" stroke="#687078" stroke-width="1.6" marker-end="url(#arr-gray)"/>
+  <text x="236" y="220" text-anchor="middle" font-size="11" fill="#687078">no join</text>
+
+  <rect x="280" y="78" width="280" height="84" rx="10" fill="#fff" stroke="#1a3d6e" stroke-width="2"/>
+  <text x="420" y="112" text-anchor="middle" font-size="16" font-weight="700" fill="#1a3d6e">Analyst writes the memo</text>
+  <text x="420" y="136" text-anchor="middle" font-size="13" fill="#54606e">gathers by hand, 4-6 hours</text>
+
+  <line x1="560" y1="120" x2="618" y2="120" stroke="#1a3d6e" stroke-width="1.8" marker-end="url(#arr-navy)"/>
+
+  <rect x="628" y="78" width="280" height="84" rx="10" fill="#fff7e8" stroke="#ed7100" stroke-width="2"/>
+  <text x="768" y="112" text-anchor="middle" font-size="16" font-weight="700" fill="#8a4b08">Compliance reviews</text>
+  <text x="768" y="136" text-anchor="middle" font-size="13" fill="#161e2e">by hand, 2-3 days</text>
+
+  <line x1="908" y1="120" x2="966" y2="120" stroke="#1a3d6e" stroke-width="1.8" marker-end="url(#arr-navy)"/>
+
+  <rect x="976" y="90" width="168" height="60" rx="10" fill="#eef8ea" stroke="#3f8624" stroke-width="2"/>
+  <text x="1060" y="126" text-anchor="middle" font-size="16" font-weight="700" fill="#3f8624">Published</text>
+</svg>

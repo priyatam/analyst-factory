@@ -4,9 +4,10 @@ The runtime launches this file as a script (`python novamark/agent.py`), so `sys
 package directory and the dependencies beside it are not importable. The path fix precedes every
 other import.
 
-The runtime allows 30s to initialize, so only the app is built here; the pipeline imports on first
-use. Unhandled exceptions are logged with a traceback before being re-raised, because otherwise
-the caller only sees an opaque 500.
+The runtime allows 30s to initialize. The pipeline imports on first use. OpenTelemetry
+starts here when this process is the runtime, and each invoke flushes before the microVM
+freezes. Unhandled exceptions are logged with a traceback before being re-raised, because
+otherwise the caller only sees an opaque 500.
 """
 import logging
 import sys
@@ -19,22 +20,32 @@ if str(_CODE_ROOT) not in sys.path:
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp  # noqa: E402
 
+from novamark import otel  # noqa: E402
+
 log = logging.getLogger("novamark")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+otel.start()
 
 app = BedrockAgentCoreApp()
 
 
 @app.entrypoint
 def invoke(payload: dict) -> dict:
-    from novamark import orchestrator
+    from novamark import orchestrator, state
 
-    handlers = {"new_request": orchestrator.start, "decision": orchestrator.decide_sync}
+    handlers = {"new_request": orchestrator.start, "decision": orchestrator.decide_sync,
+                "audit": lambda _payload: state.latest()}
     try:
+        log.info("invoke type=%s run_id=%s", payload.get("type"), payload.get("run_id"))
         return handlers[payload["type"]](payload)
     except Exception:
         log.error("invoke failed for %s\n%s", payload.get("type"), traceback.format_exc())
         raise
+    finally:
+        try:
+            otel.flush()
+        except Exception:
+            log.exception("otel flush failed")
 
 
 if __name__ == "__main__":

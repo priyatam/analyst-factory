@@ -125,7 +125,7 @@ The market quote and the prior research are the case-study mocks, and both run i
 | Only reviews and the end are saved, so a crash mid-run repeats the work | save after each transition, at the cost of more snapshots |
 | The snapshot sequence is an object count, so two concurrent writers collide and one fails | retry on conflict with a fresh count |
 | `quote_once` blocks the event loop, so the two fetches run one after the other | switch to `httpx.AsyncClient` |
-| No spans, so a slow or stuck run is invisible | emit spans per transition and per model call |
+| A span is one pass of `advance` or one model call, exported to CloudWatch; the wait at a review is not a span, because the session ends | keep the session open across that wait |
 
 ## Review decisions
 

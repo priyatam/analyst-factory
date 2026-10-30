@@ -11,6 +11,8 @@ from pathlib import Path
 from strands import Agent
 from strands.models import BedrockModel
 
+from .otel import span
+
 
 # --- settings -------------------------------------------------------------------------------
 
@@ -43,8 +45,9 @@ def agent() -> Agent:
 
 
 async def ask(prompt: str) -> str:
-    """The blocking SDK call, off the event loop."""
-    return await asyncio.to_thread(lambda: str(agent()(prompt)))
+    """The blocking SDK call, off the event loop. The prompt stays off the span."""
+    with span("model.call", model_id=MODEL_ID):
+        return await asyncio.to_thread(lambda: str(agent()(prompt)))
 
 # --- the clock ------------------------------------------------------------------------------
 

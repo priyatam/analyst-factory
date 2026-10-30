@@ -13,6 +13,7 @@ dependencies = [
     "mcp>=1.0",
     "httpx>=0.28",
     "fastapi>=0.110",
+    "aws-opentelemetry-distro>=0.20.0",
 ]
 
 [dependency-groups]

@@ -9,11 +9,13 @@ that runs next. The loop is then a lookup: run the process `status` names, repea
 `decide` resumes the same loop from the status the decision set.
 """
 import asyncio
+import logging
 import uuid
 
 from . import knowledge_base, model
 from .process import data_collector, document_analyser, gates, synthesize
 from .state import Deps, MemoState, Process, Request, Status, load, save
+from .otel import span
 
 REQUIRED = ("ticker", "asset_class", "analysis_type")
 
@@ -45,12 +47,17 @@ async def advance(state: MemoState, deps: Deps) -> dict:
     """Run processes while they are ours to run; stop when the next one is a person."""
     while True:
         status = state["status"]
-        if status in STEPS:
-            state = await STEPS[status](state, deps)
-        elif status in gates.REVIEWS:
-            return pause(state, deps)
-        else:
-            return _finish(state, deps)
+        with span("advance", run_id=state["run_id"], status=str(status),
+                  revision=int(state["revision"])):
+            logging.getLogger("novamark").info(
+                "advance run_id=%s status=%s revision=%s",
+                state["run_id"], status, state["revision"])
+            if status in STEPS:
+                state = await STEPS[status](state, deps)
+            elif status in gates.REVIEWS:
+                return pause(state, deps)
+            else:
+                return _finish(state, deps)
 
 
 def _finish(state: MemoState, deps: Deps) -> dict:

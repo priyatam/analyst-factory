@@ -7,7 +7,8 @@ import subprocess
 from pathlib import Path
 
 import aws_cdk as cdk
-from aws_cdk import aws_bedrockagentcore as agentcore, aws_iam as iam, aws_s3 as s3
+from aws_cdk import aws_bedrockagentcore as agentcore, aws_iam as iam, aws_logs as logs
+from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_assets as assets
 
 from novamark import model
@@ -19,11 +20,12 @@ def prune(pkg: Path) -> None:
     """Drop what the runtime never imports, to cut cold-start extraction time.
 
     `botocore` ships a JSON model for all 439 AWS services (23 MB); this run speaks only S3,
-    Bedrock Runtime, and STS. Those models are pure cold-start cost, extracted from the zip on
-    every new microVM, which is what pushes initialization past the 30s budget.
+    Bedrock Runtime, STS, and CloudWatch Logs (the EMF exporter). Those models are pure
+    cold-start cost, extracted from the zip on every new microVM, which is what pushes
+    initialization past the 30s budget.
     """
     keep = {"s3", "bedrock-runtime", "sts", "bedrock-agentcore", "bedrock-agentcore-control",
-            "_retry", "endpoints"}
+            "logs", "_retry", "endpoints"}
     data = pkg / "botocore" / "data"
     if data.exists():
         for service in data.iterdir():
@@ -71,6 +73,18 @@ def add_stack(app: cdk.App, package_dir: str) -> cdk.Stack:
     role.add_to_policy(iam.PolicyStatement(
         actions=["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
         resources=[f"arn:aws:logs:{region}:*:log-group:/aws/bedrock-agentcore/runtimes/*"]))
+    logs.LogGroup(stack, "AgentLogs", log_group_name="/novamark/agent").grant_write(role)
+    role.add_to_policy(iam.PolicyStatement(
+        actions=["logs:PutResourcePolicy", "logs:DescribeResourcePolicies"],
+        resources=["*"]))
+    role.add_to_policy(iam.PolicyStatement(
+        actions=["xray:PutTraceSegments", "xray:PutTelemetryRecords",
+                 "xray:GetSamplingRules", "xray:GetSamplingTargets"],
+        resources=["*"]))
+    role.add_to_policy(iam.PolicyStatement(
+        actions=["cloudwatch:PutMetricData"],
+        resources=["*"],
+        conditions={"StringEquals": {"cloudwatch:namespace": "bedrock-agentcore"}}))
     runtime = agentcore.CfnRuntime(
         stack, "Runtime", agent_runtime_name="novamark_research", role_arn=role.role_arn,
         network_configuration=agentcore.CfnRuntime.NetworkConfigurationProperty(network_mode="PUBLIC"),
@@ -79,8 +93,16 @@ def add_stack(app: cdk.App, package_dir: str) -> cdk.Stack:
                 runtime="PYTHON_3_12", entry_point=["novamark/agent.py"],
                 code=agentcore.CfnRuntime.CodeProperty(s3=agentcore.CfnRuntime.S3LocationProperty(
                     bucket=code.s3_bucket_name, prefix=code.s3_object_key)))),
-        environment_variables={"STATE_BUCKET": state.bucket_name,
-                               "AWS_REGION": cdk.Stack.of(stack).region},
+        environment_variables={
+            "STATE_BUCKET": state.bucket_name,
+            "AWS_REGION": cdk.Stack.of(stack).region,
+            "AWS_GENAI_CONTENT_EXTRACTION_OPT_OUT": "true",
+            "UNIFIED_TRACES_DESTINATION_ENABLED": "true",
+            "OTEL_SERVICE_NAME": "novamark",
+            "OTEL_EXPORTER_OTLP_LOGS_HEADERS":
+                "x-aws-log-group=/novamark/agent,x-aws-log-stream=runtime-logs,"
+                "x-aws-metric-namespace=bedrock-agentcore",
+        },
     )
     cdk.CfnOutput(stack, "RuntimeArn", value=runtime.attr_agent_runtime_arn,
                   description="export NOVAMARK_RUNTIME_ARN=<this value>")
